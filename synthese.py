@@ -23,6 +23,15 @@ OUTPUT_SYNTHESIZED_WAV =  (OUTPUT_DIR / "espeak-synth.wav").as_posix()
 OUTPUT_SYNTHESIZED_GRID = (OUTPUT_DIR / "espeak-synth.TextGrid").as_posix()
 OUTPUT_FINAL_WAV =  (OUTPUT_DIR / "result.wav").as_posix()
 
+# Utility functions
+def format_duration(seconds: float) -> str:
+	"""Returns a MM:SS.sss string for the given input"""
+	minutes = seconds // 60
+	seconds, ms = divmod(seconds % 60, 1)
+	# Round to 3 decimals, without the decimal point
+	ms = str(round(ms, 3)).split(".")[1]
+	return "{:02d}:{:02d}.{:s}".format(int(minutes), int(seconds), ms)
+
 sound = pm.Sound(SOUND_FILE)
 grid = tg.TextGrid(GRID_FILE)
 pp = pm.praat.call(sound, "To PointProcess (zeroes)", 1, "yes", "no")
@@ -93,8 +102,7 @@ def synthesize_word(word: str, output_sound):
 	# TODO: Test voices
 	praat_synth = pm.praat.call("Create SpeechSynthesizer", "French (France)", "Female1")
 	# Setup espeak to use XSampa
-	# FIXME: Is the synth being at 44.1k vs. a 16k recording an issue? (it doesn't look like)
-	pm.praat.call(praat_synth, "Speech output settings", 44100, 0.01, 1, 1, 175, "Kirshenbaum_espeak")
+	pm.praat.call(praat_synth, "Speech output settings", 16000, 0.01, 1, 1, 175, "Kirshenbaum_espeak")
 	text_synth, sound_synth = pm.praat.call(praat_synth, "To Sound", word, "yes")
 	n = pm.praat.call(text_synth, "Get number of intervals", 4)
 	# FIXME: Whut? 2 extra intervals with trailing '_:', '_' labels...
@@ -102,7 +110,6 @@ def synthesize_word(word: str, output_sound):
 	# Quick, nobody noticed...
 	# FIXME: Possibly Py3.12 related?
 	# FIXME: Nope, borked on 3.11, too... macOS, then?
-	# TODO: Serialize the grid to a file to compare with a native Praat synth...
 	if n > 2:
 		n -= 2
 	# Serialize it to double-check that...
@@ -234,4 +241,4 @@ modified_wav = pm.praat.call(manip, "Get resynthesis (overlap-add)")
 
 # Format: also available via module constants, e.g., pm.SoundFileFormat.WAV
 modified_wav.save(OUTPUT_FINAL_WAV, "WAV")
-print(modified_wav.n_samples)
+print(modified_wav.n_samples, modified_wav.get_total_duration(), format_duration(modified_wav.duration))
