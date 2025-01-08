@@ -1,9 +1,14 @@
-#!/usr/bin/env python3.11
+#!/usr/bin/env python3
 
 import parselmouth as pm
 import textgrids as tg
 from pathlib import Path
 import pprint
+
+# TODO: MM:SS.sss formatting
+# TODO: 1 vs. 3 point per phoneme contours, and keep it as an option
+# TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
+# 		Make it a list, so we keep duplicates, and just choose one at random during synth.
 
 # NOTE: Paths are relative to this file.
 BASE_DIR = Path(__file__).parent.resolve()
@@ -96,6 +101,7 @@ def synthesize_word(word: str, output_sound):
 	# Quick, nobody noticed...
 	# FIXME: Possibly Py3.12 related?
 	# FIXME: Nope, borked on 3.11, too... macOS, then?
+	# TODO: Serialize the grid to a file to compare with a native Praat synth...
 	if n > 2:
 		n -= 2
 
