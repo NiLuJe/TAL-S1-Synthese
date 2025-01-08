@@ -105,14 +105,15 @@ def synthesize_word(word: str, output_sound):
 	pm.praat.call(praat_synth, "Speech output settings", 16000, 0.01, 1, 1, 175, "Kirshenbaum_espeak")
 	text_synth, sound_synth = pm.praat.call(praat_synth, "To Sound", word, "yes")
 	n = pm.praat.call(text_synth, "Get number of intervals", 4)
-	# FIXME: Whut? 2 extra intervals with trailing '_:', '_' labels...
-	print(f"n: {n}")
-	# Quick, nobody noticed...
-	# FIXME: Possibly Py3.12 related?
-	# FIXME: Nope, borked on 3.11, too... macOS, then?
-	if n > 2:
-		n -= 2
-	# Serialize it to double-check that...
+	# Strip the extra trailing _:, _ label pair, if any
+	for i in range(n, 0, -1):
+		label = pm.praat.call(text_synth, "Get label of interval", 4, i)
+		print(i, label)
+		if label == "_:":
+			n = i-1
+			break
+
+	# Save the espeak synth for analysis & comparison
 	text_synth.save(OUTPUT_SYNTHESIZED_GRID)
 	sound_synth.save(OUTPUT_SYNTHESIZED_WAV, "WAV")
 
