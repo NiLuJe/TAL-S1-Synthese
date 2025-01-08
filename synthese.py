@@ -8,11 +8,14 @@ import pprint
 # NOTE: Paths are relative to this file.
 BASE_DIR = Path(__file__).parent.resolve()
 DATA_DIR = Path(BASE_DIR / "data")
+OUTPUT_DIR = Path(BASE_DIR / "output")
 SOUND_FILE = (DATA_DIR / "faure.wav").as_posix()
 GRID_FILE =  (DATA_DIR / "faure.TextGrid").as_posix()
-OUTPUT_WAV = Path(SOUND_FILE).with_name("faure_concat.wav").as_posix()
+OUTPUT_WAV = Path(OUTPUT_DIR / Path(SOUND_FILE).relative_to(DATA_DIR)).with_name("faure_concat.wav").as_posix()
+#OUTPUT_WAV = Path(SOUND_FILE).with_name("faure_concat.wav").as_posix()
 OUTPUT_SYNTHESIZED_WAV = Path(SOUND_FILE).with_name("faure_concat_espeak.wav").as_posix()
-OUTPUT_MODIFIED_WAV = Path(SOUND_FILE).with_name("faure_concat_modified.wav").as_posix()
+#OUTPUT_MODIFIED_WAV = Path(SOUND_FILE).with_name("faure_concat_modified.wav").as_posix()
+OUTPUT_MODIFIED_WAV = Path(OUTPUT_DIR / Path(SOUND_FILE).relative_to(DATA_DIR)).with_name("faure_concat_modified.wav").as_posix()
 
 sound = pm.Sound(SOUND_FILE)
 grid = tg.TextGrid(GRID_FILE)
