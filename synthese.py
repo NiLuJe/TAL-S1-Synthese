@@ -106,8 +106,7 @@ def synthesize_word(word: str, output_sound):
 	if n > 2:
 		n -= 2
 	# Serialize it to double-check that...
-	# NOTE: Requires merging https://github.com/Legisign/Praat-textgrids/pull/14 to get a sane file -_-"
-	text_synth.write(OUTPUT_SYNTHESIZED_GRID)
+	pm.praat.call(text_synth, "Save whole TextGrid as text file", OUTPUT_SYNTHESIZED_GRID)
 	sound_synth.save(OUTPUT_SYNTHESIZED_WAV, "WAV")
 
 	pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
