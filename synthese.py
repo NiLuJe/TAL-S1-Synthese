@@ -11,6 +11,8 @@ from textgrids import Tier
 # TODO: 1 vs. 3 point per phoneme contours, and keep it as an option
 # TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
 # 		Make it a list, so we keep duplicates, and just choose one at random during synth.
+# TODO: Make the voice choice an option (filter male voices?)
+# TODO: Make the inter-word gap (if any?) configurable
 
 # NOTE: Paths are relative to this file.
 BASE_DIR = Path(__file__).parent.resolve()
