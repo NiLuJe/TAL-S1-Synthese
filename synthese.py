@@ -5,6 +5,9 @@ import textgrids as tg
 from pathlib import Path
 import pprint
 
+# Data types for typing annotations
+from textgrids import Tier
+
 # TODO: MM:SS.sss formatting
 # TODO: 1 vs. 3 point per phoneme contours, and keep it as an option
 # TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
@@ -43,7 +46,7 @@ diphones = grid["Diphones"]
 concatenated_sound = sound.extract_part(0, 0.01, pm.WindowShape.RECTANGULAR, 1, False)
 diphones_sound = {}
 
-def extract_diphone(phoneme_1: str, phoneme_2: str, diphones):
+def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 	for j, d in enumerate(diphones[:-1]):
 		left = d
 		right = diphones[j+1]
@@ -53,20 +56,16 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones):
 
 		#print(f"{phoneme} vs. {phoneme_1} // {next} vs. {phoneme_2}")
 		if phoneme == phoneme_1 and next == phoneme_2:
-			start_l = left.xmin
-			end_l = left.xmax
-			mid_left = (start_l + end_l) / 2
+			mid_left = left.mid
+			mid_right = right.mid
 
-			end_r = right.xmax
-			mid_right = (end_l + end_r) / 2
-
-			# We can't choose only risong or descending crossings...
+			# NOTE: we can't choose only risong or descending crossings...
 			"""
 			mid_left = sound.get_nearest_zero_crossing(mid_left, 1)
 			mid_right = sound.get_nearest_zero_crossing(mid_right, 1)
 			"""
 
-			# ...So we go through a PointProcess to only keep rising zero-crossings.
+			# ...So we go through a PointProcess to only keep *rising* zero-crossings
 			id = pm.praat.call(pp, "Get nearest index", mid_left)
 			mid_left = pm.praat.call(pp, "Get time from index", id)
 			id = pm.praat.call(pp, "Get nearest index", mid_right)
@@ -78,7 +77,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones):
 					"phoneme": phoneme_1,
 					"orig_start": left.xmin,
 					"orig_end": left.xmax,
-					"duration": left.xmax - left.xmin,
+					"duration": left.dur,
 					"diphone_pos": "left",
 					"mid": mid_left,
 					"extracted_duration": left.xmax - mid_left,	# i.e., duration / 2
@@ -87,7 +86,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones):
 					"phoneme": phoneme_2,
 					"orig_start": right.xmin,
 					"orig_end": right.xmax,
-					"duration": right.xmax - right.xmin,
+					"duration": right.dur,
 					"diphone_pos": "right",
 					"mid": mid_right,
 					"extracted_duration": right.xmax - mid_right,
