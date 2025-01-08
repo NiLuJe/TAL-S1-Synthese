@@ -41,7 +41,6 @@ pp = pm.praat.call(sound, "To PointProcess (zeroes)", 1, "yes", "no")
 diphones = grid["Diphones"]
 
 # Extract a small slice of silence as our initial sound object.
-# NOTE: Look into gaussian windows to avoid edge effect...
 concatenated_sound = sound.extract_part(0, 0.01, pm.WindowShape.RECTANGULAR, 1, False)
 diphones_sound = {}
 
@@ -91,6 +90,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 					"extracted_duration": right.xmax - mid_right,
 				}
 			)
+			# NOTE: Using non-rectangular window shapes (e.g., KAISER1) affects (i.e., attenuates) the edges too much for our use case, so stick to rectangular.
 			return (sound.extract_part(mid_left, mid_right, pm.WindowShape.RECTANGULAR, 1, False), diphone_data)
 	return (None, None)
 
