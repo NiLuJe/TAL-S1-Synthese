@@ -91,7 +91,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones):
 def synthesize_word(word: str, output_sound):
 	print(f"synthesize_word on {word}")
 	# TODO: Test voices
-	praat_synth = pm.praat.call("Create SpeechSynthesizer", "French (France)", "Whisper")
+	praat_synth = pm.praat.call("Create SpeechSynthesizer", "French (France)", "Female1")
 	# Setup espeak to use XSampa
 	# FIXME: Is the synth being at 44.1k vs. a 16k recording an issue? (it doesn't look like)
 	pm.praat.call(praat_synth, "Speech output settings", 44100, 0.01, 1, 1, 175, "Kirshenbaum_espeak")
