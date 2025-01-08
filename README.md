@@ -8,5 +8,6 @@ NOTE: parselmouth (< 0.5.0) has not been vetted for Python 3.12 yet,
       so make sure you're using Py3.11
 ```
 python3.11 -m venv .venv
+source .venv/bin/activate
 pip install -U -r requirements.txt
 ```
