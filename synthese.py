@@ -1,8 +1,9 @@
 #!/usr/bin/env python3.11
 
 import parselmouth as pm
-import textgrids as tg
+#import textgrids as tg
 #import textgrid as tg
+import tgt as tg
 from pathlib import Path
 import pprint
 
@@ -19,8 +20,9 @@ sound = pm.Sound(sound_file)
 grid = tg.TextGrid(grid_file)
 pp = pm.praat.call(sound, "To PointProcess (zeroes)", 1, "yes", "no")
 # NOTE: Layer name
-diphones = grid["Diphones"]
+#diphones = grid["Diphones"]
 #diphones = grid.getFirst("Diphones")
+diphones = grid.get_tier_by_name("Diphones")
 
 # Extract a small slice of silence as our initial sound object.
 # NOTE: Look into gaussian windows to avoid edge effect...
@@ -96,8 +98,8 @@ def synthesize_word(word: str, output_sound):
 	# FIXME: Possibly Py3.12 related?
 	# FIXME: Nope, borked on 3.11, too... macOS, then?
 	# NOTE: Huh, TextGrid is *also* borked...
-	if n > 2:
-		n -= 2
+	#if n > 2:
+	#	n -= 2
 
 	pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
 
