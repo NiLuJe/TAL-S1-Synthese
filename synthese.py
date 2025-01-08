@@ -12,15 +12,16 @@ import pprint
 
 # NOTE: Paths are relative to this file.
 BASE_DIR = Path(__file__).parent.resolve()
-DATA_DIR = Path(BASE_DIR / "data")
-OUTPUT_DIR = Path(BASE_DIR / "output")
+DATA_DIR = (BASE_DIR / "data")
+OUTPUT_DIR = (BASE_DIR / "output")
+# NOTE: Unfortunately, parselmouth & co do not handle Path-like objects, so we resolve everything as strings...
 SOUND_FILE = (DATA_DIR / "faure.wav").as_posix()
 GRID_FILE =  (DATA_DIR / "faure.TextGrid").as_posix()
-OUTPUT_WAV = Path(OUTPUT_DIR / Path(SOUND_FILE).relative_to(DATA_DIR)).with_name("faure_concat.wav").as_posix()
-#OUTPUT_WAV = Path(SOUND_FILE).with_name("faure_concat.wav").as_posix()
-OUTPUT_SYNTHESIZED_WAV = Path(SOUND_FILE).with_name("faure_concat_espeak.wav").as_posix()
-#OUTPUT_MODIFIED_WAV = Path(SOUND_FILE).with_name("faure_concat_modified.wav").as_posix()
-OUTPUT_MODIFIED_WAV = Path(OUTPUT_DIR / Path(SOUND_FILE).relative_to(DATA_DIR)).with_name("faure_concat_modified.wav").as_posix()
+# Output files
+OUTPUT_WAV = (OUTPUT_DIR / "raw_concat.wav").as_posix()
+OUTPUT_SYNTHESIZED_WAV =  (OUTPUT_DIR / "espeak-synth.wav").as_posix()
+OUTPUT_SYNTHESIZED_GRID = (OUTPUT_DIR / "espeak-synth.TextGrid").as_posix()
+OUTPUT_FINAL_WAV =  (OUTPUT_DIR / "result.wav").as_posix()
 
 sound = pm.Sound(SOUND_FILE)
 grid = tg.TextGrid(GRID_FILE)
@@ -104,6 +105,10 @@ def synthesize_word(word: str, output_sound):
 	# TODO: Serialize the grid to a file to compare with a native Praat synth...
 	if n > 2:
 		n -= 2
+	# Serialize it to double-check that...
+	# NOTE: Requires merging https://github.com/Legisign/Praat-textgrids/pull/14 to get a sane file -_-"
+	text_synth.write(OUTPUT_SYNTHESIZED_GRID)
+	sound_synth.save(OUTPUT_SYNTHESIZED_WAV, "WAV")
 
 	pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
 
@@ -229,5 +234,5 @@ pm.praat.call([manip, duration_tier], "Replace duration tier")
 modified_wav = pm.praat.call(manip, "Get resynthesis (overlap-add)")
 
 # Format: also available via module constants, e.g., pm.SoundFileFormat.WAV
-modified_wav.save(OUTPUT_MODIFIED_WAV, "WAV")
+modified_wav.save(OUTPUT_FINAL_WAV, "WAV")
 print(modified_wav.n_samples)
