@@ -8,7 +8,6 @@ import pprint
 # Data types for typing annotations
 from textgrids import Tier
 
-# TODO: MM:SS.sss formatting
 # TODO: 1 vs. 3 point per phoneme contours, and keep it as an option
 # TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
 # 		Make it a list, so we keep duplicates, and just choose one at random during synth.
@@ -28,7 +27,7 @@ OUTPUT_FINAL_WAV =  (OUTPUT_DIR / "result.wav").as_posix()
 
 # Utility functions
 def format_duration(seconds: float) -> str:
-	"""Returns a MM:SS.sss string for the given input"""
+	"""Returns a MM:SS.sss string for the given input float in seconds"""
 	minutes = seconds // 60
 	seconds, ms = divmod(seconds % 60, 1)
 	# Round to 3 decimals, without the decimal point
