@@ -5,17 +5,17 @@ import textgrids as tg
 from pathlib import Path
 import pprint
 
-# FIXME: Mettre tout à coté du script pour faire des chemins relatifs.
-base_dir = Path(Path.home() / "Documents/TAL/M1/S1/Synthèse de la parole")
-sound_file = (base_dir / "faure.wav").as_posix()
-grid_file =  (base_dir / "faure.TextGrid").as_posix()
-output_wav = Path(sound_file).with_name("faure_concat.wav").as_posix()
-output_synthesized_wav = Path(sound_file).with_name("faure_concat_espeak.wav").as_posix()
-output_modified_wav = Path(sound_file).with_name("faure_concat_modified.wav").as_posix()
-dict_file = base_dir / "dico_UTF8.txt"
+# NOTE: Paths are relative to this file.
+BASE_DIR = Path(__file__).parent.resolve()
+DATA_DIR = Path(BASE_DIR / "data")
+SOUND_FILE = (DATA_DIR / "faure.wav").as_posix()
+GRID_FILE =  (DATA_DIR / "faure.TextGrid").as_posix()
+OUTPUT_WAV = Path(SOUND_FILE).with_name("faure_concat.wav").as_posix()
+OUTPUT_SYNTHESIZED_WAV = Path(SOUND_FILE).with_name("faure_concat_espeak.wav").as_posix()
+OUTPUT_MODIFIED_WAV = Path(SOUND_FILE).with_name("faure_concat_modified.wav").as_posix()
 
-sound = pm.Sound(sound_file)
-grid = tg.TextGrid(grid_file)
+sound = pm.Sound(SOUND_FILE)
+grid = tg.TextGrid(GRID_FILE)
 pp = pm.praat.call(sound, "To PointProcess (zeroes)", 1, "yes", "no")
 # NOTE: Layer name
 diphones = grid["Diphones"]
@@ -179,7 +179,7 @@ def synthesize_sentence(sentence: str, output_sound):
 concatenated_sound, sentence_data = synthesize_sentence(sentence, concatenated_sound)
 
 # Snapshot the concatenation results before PSOLA
-concatenated_sound.save(output_wav, "WAV")
+concatenated_sound.save(OUTPUT_WAV, "WAV")
 print(concatenated_sound.n_samples)
 
 # Compute PSOLA manipulations on the full conatenated sound, in order to have enough data to handle short phones.
@@ -220,5 +220,5 @@ pm.praat.call([manip, duration_tier], "Replace duration tier")
 modified_wav = pm.praat.call(manip, "Get resynthesis (overlap-add)")
 
 # Format: also available via module constants, e.g., pm.SoundFileFormat.WAV
-modified_wav.save(output_modified_wav, "WAV")
+modified_wav.save(OUTPUT_MODIFIED_WAV, "WAV")
 print(modified_wav.n_samples)
