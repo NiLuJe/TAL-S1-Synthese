@@ -92,6 +92,7 @@ def synthesize_word(word: str, output_sound):
 	print(f"n: {n}")
 	# Quick, nobody noticed...
 	# FIXME: Possibly Py3.12 related?
+	# FIXME: Nope, borked on 3.11, too... macOS, then?
 	if n > 2:
 		n -= 2
 
