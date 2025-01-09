@@ -270,12 +270,18 @@ for phoneme_data in sentence_data:
 	print(f"scaling point @ {mid} by {scale}")
 	# Args: time, scale
 	# FIXME: Do we need more points? Right now, Praat should lerp between points, which is probably good enough.
+	pm.praat.call(duration_tier, "Add point", mid, scale)
+
 	# Another viable approach: 2 points, at start & end; in which case, a few ms away, to make the points unique between consecutive phonemes.
-	pm.praat.call(duration_tier, "Add point", start + 0.001, 1)
-	pm.praat.call(duration_tier, "Add point", end - 0.001, 1)
-	#pm.praat.call(duration_tier, "Add point", mid, scale)
-	pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
-	pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
+	# NOTE: This matches how the Praat manual explains that sort of stuff...
+	# The best approach miight depend on the voice, or the "shape" of the scaling, basically?
+	#pm.praat.call(duration_tier, "Add point", start + 0.001, scale)
+	#pm.praat.call(duration_tier, "Add point", end - 0.001, scale)
+
+	#pm.praat.call(duration_tier, "Add point", start + 0.001, 1)
+	#pm.praat.call(duration_tier, "Add point", end - 0.001, 1)
+	#pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
+	#pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
 
 # Apply the PSOLA manipulations
 # NOTE: Since we apply everything at once, I assume this doesn't skew our timestamp positions given the duration changes?
