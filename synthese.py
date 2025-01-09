@@ -19,13 +19,21 @@ BASE_DIR = Path(__file__).parent.resolve()
 DATA_DIR = (BASE_DIR / "data")
 OUTPUT_DIR = (BASE_DIR / "output")
 # NOTE: Unfortunately, parselmouth & co do not handle Path-like objects, so we resolve everything as strings...
-SOUND_FILE = (DATA_DIR / "faure.wav").as_posix()
-GRID_FILE =  (DATA_DIR / "faure.TextGrid").as_posix()
+SOUND_FILE = (DATA_DIR / "enregistrement.wav").as_posix()
+GRID_FILE =  (DATA_DIR / "enregistrement.TextGrid").as_posix()
 # Output files
 OUTPUT_WAV = (OUTPUT_DIR / "raw_concat.wav").as_posix()
 OUTPUT_SYNTHESIZED_WAV =  (OUTPUT_DIR / "espeak-synth.wav").as_posix()
 OUTPUT_SYNTHESIZED_GRID = (OUTPUT_DIR / "espeak-synth.TextGrid").as_posix()
 OUTPUT_FINAL_WAV =  (OUTPUT_DIR / "result.wav").as_posix()
+
+# Sentence list
+SENTENCES = [
+	"Ah bah maintenant, elle va marcher beaucoup moins bien forcément !",
+	"Je ne vous jette pas la pierre, Pierre, mais j'étais à deux doigts de m'agacer.",
+	"Barrez-vous, cons de mimes !",
+	"C'est une voiture de collection de prestige. Il y en a plus que trois qui roulent dans le monde et moi... J'ai la numéro 4."
+]
 
 # Utility functions
 def format_duration(seconds: float) -> str:
@@ -40,7 +48,7 @@ sound = pm.Sound(SOUND_FILE)
 grid = tg.TextGrid(GRID_FILE)
 pp = pm.praat.call(sound, "To PointProcess (zeroes)", 1, "yes", "no")
 # NOTE: Layer name
-diphones = grid["Diphones"]
+diphones = grid["phone"]
 
 # Extract a small slice of silence as our initial sound object.
 concatenated_sound = sound.extract_part(0, 0.01, pm.WindowShape.RECTANGULAR, 1, False)
@@ -105,13 +113,6 @@ def synthesize_word(word: str, output_sound):
 	pm.praat.call(praat_synth, "Speech output settings", 16000, 0.01, 1, 1, 175, "Kirshenbaum_espeak")
 	text_synth, sound_synth = pm.praat.call(praat_synth, "To Sound", word, "yes")
 	n = pm.praat.call(text_synth, "Get number of intervals", 4)
-	# Strip the extra trailing _:, _ label pair, if any
-	for i in range(n, 0, -1):
-		label = pm.praat.call(text_synth, "Get label of interval", 4, i)
-		print(i, label)
-		if label == "_:":
-			n = i-1
-			break
 
 	# Save the espeak synth for analysis & comparison
 	text_synth.save(OUTPUT_SYNTHESIZED_GRID)
@@ -129,13 +130,20 @@ def synthesize_word(word: str, output_sound):
 	print(f"espeak_phonemes: {espeak_phonemes}")
 	# Replace empty phonemes w/ an underscore
 	espeak_phonemes = ["_" if x == "" else x for x in espeak_phonemes]
-	espeak_transcription = "".join(espeak_phonemes)
-	# Sanity check
-	print(f"espeak transcription: {espeak_transcription}")
 
 	# Compute the f0 mean of each phoneme (via Praat's "Get Mean")
 	espeak_phonemes_start_ts = [pm.praat.call(text_synth, "Get start time of interval", 4, i + 1) for i in range(n)]
 	espeak_phonemes_end_ts   = [pm.praat.call(text_synth, "Get end time of interval", 4, i + 1) for i in range(n)]
+
+	# Make sure we start on silence, because apparently that's not a given (e.g., our first sentence)...
+	if espeak_phonemes[0] != "_":
+		espeak_phonemes.insert(0, "_")
+		espeak_phonemes_start_ts.insert(0, 0.0)
+		espeak_phonemes_end_ts.insert(0, 0.0)
+
+	espeak_transcription = "".join(espeak_phonemes)
+	# Sanity check
+	print(f"espeak transcription: {espeak_transcription}")
 
 	# Zip it!
 	espeak_data = []
@@ -151,8 +159,16 @@ def synthesize_word(word: str, output_sound):
 		}
 		espeak_data.append(d)
 
-	# FIXME: Beware, espeak might chuck out the IPA `g` in XSampa (i.e., U+0261 (ɡ) instead of U+0067 (g))...
 	for i, phoneme in enumerate(espeak_transcription[:-1]):
+		# FIXME: Skip non-initial pauses (insert inter-word silence instead, times two for _:)
+		if i > 1 and phoneme.startswith("_"):
+			continue
+
+		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
+		if phoneme == "ɡ":
+			# We prefer the ASCII `g` (U+0067)
+			phoneme = "g"
+
 		phone1 = phoneme
 		phone2 = espeak_transcription[i+1]
 
@@ -193,7 +209,7 @@ def synthesize_word(word: str, output_sound):
 	return (output_sound, espeak_data)
 
 # FIXME: Or sys.argv[1]
-sentence = "tzigane parcmètre vodka."
+sentence = SENTENCES[0]
 def synthesize_sentence(sentence: str, output_sound):
 	output_sound, sentence_data = synthesize_word(sentence, output_sound)
 	return output_sound, sentence_data
