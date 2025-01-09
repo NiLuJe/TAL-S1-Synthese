@@ -8,9 +8,10 @@ import pprint
 # Data types for typing annotations
 from textgrids import Tier
 
-# TODO: 1 vs. 3 point per phoneme contours, and keep it as an option
+# TODO: 1 vs. 3 point per pitch contours, and keep it as an option
 # TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
 # 		Make it a list, so we keep duplicates, and just choose one at random during synth.
+#       Also remember the original position, and default to choosing the closest pos to the prev match (i.e., in order, make it the default).
 # TODO: Make the voice choice an option (filter male voices?)
 # TODO: Make the inter-word gap (if any?) configurable
 
