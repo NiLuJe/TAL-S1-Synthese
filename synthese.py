@@ -218,7 +218,7 @@ def synthesize_word(word: str, output_sound):
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
-			print(f"Failed to extract phoneme {phoneme} for diphone {phone1}{phone2}")
+			print(f"Failed to extract diphone {phone1}{phone2}")
 	return (output_sound, espeak_data)
 
 # FIXME: Or sys.argv[1]
