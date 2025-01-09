@@ -197,7 +197,13 @@ def synthesize_word(word: str, output_sound):
 
 		# Concat
 		if extraction != None and diphone_data != None:
+			ppr = pprint.PrettyPrinter(indent=4, sort_dicts=True)
 			# Compute phoneme position in the concatenated stream, keeping in mind that two different diphones contribute to one phoneme...
+			#print("starting espeak_data (left):")
+			#ppr.pprint(espeak_data[i])
+			#print("starting espeak_data (right):")
+			#ppr.pprint(espeak_data[i+1])
+
 			left_pos = output_sound.duration
 			espeak_data[i]["concat_start"]    = espeak_data[i].get("concat_start", left_pos)
 			espeak_data[i]["concat_duration"] = espeak_data[i].get("concat_duration", 0.0) + diphone_data[0]["extracted_duration"]
@@ -214,15 +220,14 @@ def synthesize_word(word: str, output_sound):
 			#	- In espeak data:
 			#		- unprefixed ts are ts in the espeak synth
 			#		- concat ts are the output ts in the concatenated stream
-			pp = pprint.PrettyPrinter(indent=4, sort_dicts=True)
 			print("diphone_data (left):")
-			pp.pprint(diphone_data[0])
+			ppr.pprint(diphone_data[0])
 			print("espeak_data (left):")
-			pp.pprint(espeak_data[i])
+			ppr.pprint(espeak_data[i])
 			print("diphone_data (right):")
-			pp.pprint(diphone_data[1])
+			ppr.pprint(diphone_data[1])
 			print("espeak_data (right):")
-			pp.pprint(espeak_data[i+1])
+			ppr.pprint(espeak_data[i+1])
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
