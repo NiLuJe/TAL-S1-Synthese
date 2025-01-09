@@ -300,7 +300,7 @@ concatenated_sound, sentence_data = synthesize_sentence(sentence, concatenated_s
 
 # Snapshot the concatenation results before PSOLA
 concatenated_sound.save(OUTPUT_WAV, "WAV")
-print(concatenated_sound.n_samples)
+print(concatenated_sound.n_samples, concatenated_sound.get_total_duration(), format_duration(concatenated_sound.duration))
 
 # Compute PSOLA manipulations on the full conatenated sound, in order to have enough data to handle short phones.
 # We'll just have to find our diphones positions again ;).
