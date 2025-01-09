@@ -288,14 +288,14 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 		if extraction != None and diphone_data != None:
 			# Compute phoneme position in the concatenated stream, keeping in mind that two different diphones contribute to one phoneme...
 			#print("starting espeak_data (left):")
-			#pprint(espeak_data[left_i])
+			#pprint(espeak_data[left_i], expand_all=True)
 			left_pos = output_sound.duration
 			espeak_data[left_i]["concat_start"]    = espeak_data[left_i].get("concat_start", left_pos)
 			espeak_data[left_i]["concat_duration"] = espeak_data[left_i].get("concat_duration", 0.0) + diphone_data[0]["extracted_duration"]
 			espeak_data[left_i]["concat_end"]      = espeak_data[left_i]["concat_start"] + espeak_data[left_i]["concat_duration"]
 
 			#print("starting espeak_data (right):")
-			#pprint(espeak_data[right_i])
+			#pprint(espeak_data[right_i], expand_all=True)
 			right_pos = espeak_data[left_i]["concat_end"]
 			espeak_data[right_i]["concat_start"]    = espeak_data[right_i].get("concat_start", right_pos)
 			espeak_data[right_i]["concat_duration"] = espeak_data[right_i].get("concat_duration", 0.0) + diphone_data[1]["extracted_duration"]
@@ -308,13 +308,13 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 			#		- unprefixed ts are ts in the espeak synth
 			#		- concat ts are the output ts in the concatenated stream
 			print("diphone_data (left):")
-			pprint(diphone_data[0])
+			pprint(diphone_data[0], expand_all=True)
 			print("espeak_data (left):")
-			pprint(espeak_data[left_i])
+			pprint(espeak_data[left_i], expand_all=True)
 			print("diphone_data (right):")
-			pprint(diphone_data[1])
+			pprint(diphone_data[1], expand_all=True)
 			print("espeak_data (right):")
-			pprint(espeak_data[right_i])
+			pprint(espeak_data[right_i], expand_all=True)
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
