@@ -61,6 +61,7 @@ concatenated_sound = sound.extract_part(0, 0.01, pm.WindowShape.RECTANGULAR, 1, 
 diphones_sound = {}
 
 def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
+	print(f"Extracting diphone {phoneme_1}{phoneme_2}...")
 	for j, d in enumerate(diphones[:-1]):
 		left = d
 		right = diphones[j+1]
@@ -182,7 +183,10 @@ def synthesize_word(word: str, output_sound):
 			"start": float(start),
 			"end": float(end),
 			"duration": float(end) - float(start),
-			"f0": float(mean_f0)
+			"f0": float(mean_f0),
+			"concat_start": 0.0,
+			"concat_end": 0.0,
+			"concat_duration": 0.0,
 		}
 		espeak_data.append(d)
 
@@ -195,16 +199,16 @@ def synthesize_word(word: str, output_sound):
 
 		# Concat
 		if extraction != None and diphone_data != None:
-			# Compute phoneme position in the concatenated stream
+			# Compute phoneme position in the concatenated stream, keeping in mind that two different diphones contribute to one phoneme...
 			left_pos = output_sound.duration
-			espeak_data[i]["concat_start"] = left_pos
-			espeak_data[i]["concat_duration"] = diphone_data[0]["extracted_duration"]
-			espeak_data[i]["concat_end"] = left_pos + espeak_data[i]["concat_duration"]
+			espeak_data[i]["concat_start"]    = min(left_pos, espeak_data[i]["concat_start"])
+			espeak_data[i]["concat_duration"] = espeak_data[i]["concat_duration"] + diphone_data[0]["extracted_duration"]
+			espeak_data[i]["concat_end"]      = max(espeak_data[i]["concat_end"], left_pos + espeak_data[i]["concat_duration"])
 
 			right_pos = espeak_data[i]["concat_end"]
-			espeak_data[i+1]["concat_start"] = right_pos
-			espeak_data[i+1]["concat_duration"] = diphone_data[1]["extracted_duration"]
-			espeak_data[i+1]["concat_end"] = right_pos + espeak_data[i+1]["concat_duration"]
+			espeak_data[i+1]["concat_start"]    = min(right_pos, espeak_data[i+1]["concat_start"])
+			espeak_data[i+1]["concat_duration"] = espeak_data[i+1]["concat_duration"] + diphone_data[1]["extracted_duration"]
+			espeak_data[i+1]["concat_end"]      = max(espeak_data[i+1]["concat_end"], right_pos + espeak_data[i+1]["concat_duration"])
 			# Sanity check...
 			# NOTE:
 			#	- In diphone_data:
