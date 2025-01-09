@@ -120,7 +120,8 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 def synthesize_word(word: str, output_sound):
 	print(f"synthesize_word on {word}")
 	# TODO: Test voices
-	praat_synth = pm.praat.call("Create SpeechSynthesizer", "French (France)", "Female1")
+	# NOTE: m6 seems to match the default for roa/fr in espeak-ng...
+	praat_synth = pm.praat.call("Create SpeechSynthesizer", "French (France)", "Male6")
 	# Setup espeak to use XSampa
 	pm.praat.call(praat_synth, "Speech output settings", 16000, 0.01, 1, 1, 175, "Kirshenbaum_espeak")
 	text_synth, sound_synth = pm.praat.call(praat_synth, "To Sound", word, "yes")
