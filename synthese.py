@@ -177,7 +177,7 @@ def synthesize_word(word: str, output_sound):
 	if espeak_phonemes[0] != "_":
 		espeak_phonemes.insert(0, "_")
 		espeak_phonemes_start_ts.insert(0, 0.0)
-		espeak_phonemes_end_ts.insert(0, 0.045)
+		espeak_phonemes_end_ts.insert(0, SETTINGS["word_gap"] * 2)
 
 	# Sanity check
 	print(f"espeak transcription: {"".join(espeak_phonemes)}")
