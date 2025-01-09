@@ -49,6 +49,10 @@ grid = tg.TextGrid(GRID_FILE)
 pp = pm.praat.call(sound, "To PointProcess (zeroes)", 1, "yes", "no")
 # NOTE: Layer name
 diphones = grid["phone"]
+# NOTE: Our grid was initially populated by Praat's Annotate > To TextGrd (silences) function.
+#       At the time, we labeled silences with an empty label, and speech with an asterism.
+#       Strip those out.
+diphones = Tier([x for x in diphones if x.text != "" and not x.text.startswith("*")])
 
 # Extract a small slice of silence as our initial sound object.
 concatenated_sound = sound.extract_part(0, 0.01, pm.WindowShape.RECTANGULAR, 1, False)
@@ -62,6 +66,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 		phoneme = left.text
 		next = right.text
 
+		# For debugging purposes...
 		#print(f"{phoneme} vs. {phoneme_1} // {next} vs. {phoneme_2}")
 		if phoneme == phoneme_1 and next == phoneme_2:
 			mid_left = left.mid
@@ -141,9 +146,8 @@ def synthesize_word(word: str, output_sound):
 		espeak_phonemes_start_ts.insert(0, 0.0)
 		espeak_phonemes_end_ts.insert(0, 0.0)
 
-	espeak_transcription = "".join(espeak_phonemes)
 	# Sanity check
-	print(f"espeak transcription: {espeak_transcription}")
+	print(f"espeak transcription: {"".join(espeak_phonemes)}")
 
 	# Zip it!
 	espeak_data = []
@@ -159,18 +163,22 @@ def synthesize_word(word: str, output_sound):
 		}
 		espeak_data.append(d)
 
-	for i, phoneme in enumerate(espeak_transcription[:-1]):
-		# FIXME: Skip non-initial pauses (insert inter-word silence instead, times two for _:)
-		if i > 1 and phoneme.startswith("_"):
-			continue
-
+	# NOTE: Make sure we iterate on a list, and not a string, to handle diacritics properly...
+	for i, phoneme in enumerate(espeak_phonemes[:-1]):
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
 		if phoneme == "ɡ":
 			# We prefer the ASCII `g` (U+0067)
 			phoneme = "g"
 
 		phone1 = phoneme
-		phone2 = espeak_transcription[i+1]
+		phone2 = espeak_phonemes[i+1]
+
+		# FIXME: Skip non-initial leading pauses (insert inter-word silence instead, times two for _:)
+		if i > 1 and phoneme.startswith("_"):
+			continue
+		# FIXME: Skip non-terminal trailing pauses
+		if i < len(espeak_phonemes) and phone2.startswith("_"):
+			continue
 
 		extraction, diphone_data = extract_diphone(phone1, phone2, diphones)
 
@@ -205,7 +213,7 @@ def synthesize_word(word: str, output_sound):
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
-			print(f"Failed to extract phoneme {phoneme}")
+			print(f"Failed to extract phoneme {phoneme} for diphone {phone1}{phone2}")
 	return (output_sound, espeak_data)
 
 # FIXME: Or sys.argv[1]
