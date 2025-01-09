@@ -8,6 +8,7 @@ import pprint
 
 # Data types for typing annotations
 from textgrids import Tier
+from parselmouth import Sound
 
 # TODO: 1 vs. 3 point per pitch contours, and keep it as an option
 # TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
@@ -52,6 +53,7 @@ SETTINGS = {
 # Utility functions
 def format_duration(seconds: float) -> str:
 	"""Returns a MM:SS.sss string for the given input float in seconds"""
+
 	minutes = seconds // 60
 	seconds, ms = divmod(seconds % 60, 1)
 	# Round to 3 decimals, without the decimal point
@@ -74,7 +76,13 @@ diphones = grid["phone"]
 concatenated_sound = sound.extract_part(0, 0.01, pm.WindowShape.RECTANGULAR, 1, False)
 diphones_sound = {}
 
-def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
+def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier) -> tuple[Sound | None, tuple[dict, dict] | None]:
+	"""
+	Extract the diphone phoneme_1 + phoneme_2 from the Tier diphones.
+	Returns a 2-element tuple composed of the Sound object, and a tuple of 2 dictionaries with metadata from the individual phones.
+	Returns (None, None) on extraction failure.
+	"""
+
 	print(f"Extracting diphone {phoneme_1}{phoneme_2}...")
 	# NOTE: pairwise does exactly what we need, iterating over overlapping pairs ;).
 	for pair in itertools.pairwise(diphones):
