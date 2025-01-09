@@ -74,10 +74,10 @@ diphones_sound = {}
 
 def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 	print(f"Extracting diphone {phoneme_1}{phoneme_2}...")
-	# FIXME: Use itertools.pairwise
-	for j, d in enumerate(diphones[:-1]):
-		left = d
-		right = diphones[j+1]
+	# NOTE: pairwise does exactly what we need, iterating over overlapping pairs ;).
+	for pair in itertools.pairwise(diphones):
+		left  = pair[0]
+		right = pair[1]
 
 		phoneme = left.text
 		next = right.text
