@@ -67,7 +67,12 @@ def format_duration(seconds: float) -> str:
 	seconds, ms = divmod(seconds % 60, 1)
 	# Round to 3 decimals, without the decimal point
 	ms = str(round(ms, 3)).split(".")[1]
-	return "{:02d}:{:02d}.{:s}".format(int(minutes), int(seconds), ms)
+	return "{:02d}:{:02d}.{:03s}".format(int(minutes), int(seconds), ms)
+
+def print_sound_info(sound: Sound):
+	"""Print detailed information about a Sound object"""
+	print(sound.info(), end="")
+	print(f"Duration: {format_duration(sound.duration)}")
 
 # Global objects
 DIPHONES_SOUND = pm.Sound(SOUND_FILE)
@@ -319,7 +324,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 
 def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, Any]]) -> Sound:
 	"""
-	Iterate over `concatenated_sound` phone by phone, applying the f0 contour (if any) and duration of the matching phoneme from an espeak synth,
+	Iterate over `concatenated_sound` phoneme by phoneme, applying the f0 contour (if any) and duration of the matching phoneme from an espeak synth,
 	via the metadata available in `sentence_data` (as produced by `espeak_sentence` & `synthesize_sentence`).
 	Returns a new Sound object with the manipulations applied via PSOLA.
 	"""
@@ -346,7 +351,7 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 			mid = (start + end) / 2
 			duration = phoneme_data["concat_duration"]
 			print(f"concat duration: {duration} ({start} -> {end})")
-			# From espeak
+			# From eSpeak
 			f0 = phoneme_data["f0"]
 			target_duration = phoneme_data["duration"]
 			print(f"target duration: {target_duration} ({phoneme_data["start"]} -> {phoneme_data["end"]})")
@@ -358,9 +363,10 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 			# scale extracted phoneme to espeak phoneme's duration
 			scale = target_duration / duration
 
+			# We can experiment with a few variations on how to apply the duration...
 			match SETTINGS["duration_points"]:
 				case "mid":
-					print(f"scaling point @ {mid} by {scale}")
+					print(f"scaling midpoint @ {mid} by {scale}")
 					# Args: time, scale
 					pm.praat.call(duration_tier, "Add point", mid, scale)
 				case "edges":
@@ -393,14 +399,14 @@ def synthesize():
 
 	# Snapshot the concatenation results before PSOLA
 	output_sound.save(CONCAT_WAV, "WAV")
-	print(output_sound.n_samples, output_sound.get_total_duration(), format_duration(output_sound.duration))
+	print_sound_info(output_sound)
 
 	# Apply PSOLA manipulations
 	modified_wav = manipulate_sound(output_sound, sentence_data)
 
 	# And, finally, save the final result!
 	modified_wav.save(OUTPUT_FINAL_WAV, "WAV")
-	print(modified_wav.n_samples, modified_wav.get_total_duration(), format_duration(modified_wav.duration))
+	print_sound_info(modified_wav)
 
 # Main entry-point
 if __name__ == "__main__":
