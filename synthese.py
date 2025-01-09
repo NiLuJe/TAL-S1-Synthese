@@ -8,6 +8,7 @@ from rich import print
 from rich.pretty import pprint
 
 import itertools
+import math
 import parselmouth as pm
 import textgrids as tg
 from pathlib import Path
@@ -235,17 +236,28 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 		mid = (float(start) + float(end)) / 2
 		offset = 0.0
 		start_f0 = float("nan")
-		while start_f0 < 0:
-			start_f0 = pm.praat.call(pitch_synth, "Get value at time", start + offset, "Hertz", "linear")
+		while math.isnan(start_f0):
+			pos = start + offset
+			start_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
 			offset += 0.001
+			print("start_f0", start_f0, offset)
+			if pos >= end:
+				break
 
-		mid_f0   = pm.praat.call(pitch_synth, "Get value at time", mid, "Hertz", "linear")
+		# NOTE: Would *also* require jittering left and right if NaN...
+		mid_f0 = pm.praat.call(pitch_synth, "Get value at time", mid, "Hertz", "linear")
+		print(f"mid_f0: {mid_f0}")
 
 		offset = 0.0
 		end_f0 = float("nan")
-		while end_f0 < 0:
-			end_f0 = pm.praat.call(pitch_synth, "Get value at time", end - offset, "Hertz", "linear")
+		while math.isnan(end_f0):
+			pos = end - offset
+			end_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
 			offset += 0.001
+			print("end_f0", end_f0, offset)
+			if pos <= start:
+				break
+
 
 		# We'll store everything in a list of dicts...
 		d = {
