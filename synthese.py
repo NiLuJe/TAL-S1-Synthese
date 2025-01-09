@@ -41,10 +41,12 @@ SENTENCES = [
 SETTINGS = {
 	# For eSpeak
 	"voice": "Male6",
-	"word_gap": 0.01,
+	"word_gap": 0.01, # in seconds
 	"pitch_multiplier": 1.0, # 0.5-2.0
 	"pitch_range_multiplier": 1.0, # 0-2.0
 	"wpm": 175, # 80-450
+	# Behavior tweaks
+	"skip_word_gaps": True,	# Add word_gap silences on espeak word gaps if False, otherwise, skip them
 }
 
 # Utility functions
@@ -187,6 +189,15 @@ def synthesize_word(word: str, output_sound):
 	# Zip it!
 	espeak_data = []
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
+		# NOTE: This was used before implementing word-gap handling, to just skip them entirely.
+		#       Which made everything simpler, mind you ;o).
+		#       i.e., before f89c1264f980c615a3c41ca0c998cb4f5d9cf8a1
+		"""
+		if 0 < i < len(espeak_phonemes)-1:
+			if phoneme.startswith("_"):
+				continue
+		"""
+
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
 		if phoneme == "ɡ":
 			# We prefer the ASCII `g` (U+0067)
@@ -207,6 +218,7 @@ def synthesize_word(word: str, output_sound):
 	# NOTE: Make sure we iterate on a list, and not a string, to handle diacritics properly...
 	real_left, real_right = None, None
 	for i, pair in enumerate(itertools.pairwise(espeak_data)):
+		# Trickery needed to deal with word-gaps...
 		left  = real_left or pair[0]
 		right = real_right or pair[1]
 
@@ -219,14 +231,15 @@ def synthesize_word(word: str, output_sound):
 		# NOTE: Handle word gaps manually, as we only annotate "long" diphones on *sentence* edges..
 		if 0 < left_i < len(espeak_data)-2:
 			if phone1.startswith("_") or phone2.startswith("_"):
-				print("Inserting a word gap silence")
-				# Create a silence
-				duration = SETTINGS["word_gap"] * 2 if phone1.endswith(":") or phone2.endswith(":") else SETTINGS["word_gap"]
-				# Args: obj name, end, start, duration, samplerate, formula
-				silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
-				# Insert it w/o metadata, we don't need it for PSOLA later
-				output_sound = output_sound.concatenate([output_sound, silence])
-				# Remember the proper phoneme to use for the next iteration...
+				if not SETTINGS["skip_word_gaps"]:
+					print("Inserting a word gap silence")
+					# Create a silence
+					duration = SETTINGS["word_gap"] * 2 if phone1.endswith(":") or phone2.endswith(":") else SETTINGS["word_gap"]
+					# Args: obj name, end, start, duration, samplerate, formula
+					silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
+					# Insert it w/o metadata, we don't need it for PSOLA later
+					output_sound = output_sound.concatenate([output_sound, silence])
+				# Remember the proper phoneme to use for the next iteration (i.e., skip over the silences while keeping track of the previous phone)...
 				if phone2.startswith("_"):
 					real_left = espeak_data[left_i]
 				else:
