@@ -389,9 +389,7 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 	pm.praat.call([manip, duration_tier], "Replace duration tier")
 	return pm.praat.call(manip, "Get resynthesis (overlap-add)")
 
-def synthesize():
-	# FIXME!
-	sentence = SENTENCES[0]
+def synthesize(sentence: str):
 	output_sound, sentence_data = synthesize_sentence(sentence, CONCAT_SOUND)
 
 	# Snapshot the concatenation results before PSOLA
@@ -407,4 +405,5 @@ def synthesize():
 
 # Main entry-point
 if __name__ == "__main__":
-	synthesize()
+	# Throw the first sentence at it for a quick sanity check
+	synthesize(SENTENCES[0])
