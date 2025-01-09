@@ -228,15 +228,37 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 			# We prefer the ASCII `g` (U+0067)
 			phoneme = "g"
 
+		# We default to the mean pitch...
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
+
+		# But also store a few pitch points to experiment with...
+		mid = (float(start) + float(end)) / 2
+		offset = 0.0
+		start_f0 = float("nan")
+		while start_f0 < 0:
+			start_f0 = pm.praat.call(pitch_synth, "Get value at time", start + offset, "Hertz", "linear")
+			offset += 0.001
+
+		mid_f0   = pm.praat.call(pitch_synth, "Get value at time", mid, "Hertz", "linear")
+
+		offset = 0.0
+		end_f0 = float("nan")
+		while end_f0 < 0:
+			end_f0 = pm.praat.call(pitch_synth, "Get value at time", end - offset, "Hertz", "linear")
+			offset += 0.001
+
 		# We'll store everything in a list of dicts...
 		d = {
 			"idx": len(espeak_data), # We'll need to poke at the actual data inside a pairwise iterator, so remember the index
 			"phoneme": phoneme,
 			"start": float(start),
 			"end": float(end),
+			"mid": mid,
 			"duration": float(end) - float(start),
 			"f0": float(mean_f0),
+			"start_f0": start_f0,
+			"mid_f0": mid_f0,
+			"end_f0": end_f0,
 		}
 		espeak_data.append(d)
 	return espeak_data
