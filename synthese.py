@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import itertools
 import parselmouth as pm
 import textgrids as tg
 from pathlib import Path
@@ -73,6 +74,7 @@ diphones_sound = {}
 
 def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 	print(f"Extracting diphone {phoneme_1}{phoneme_2}...")
+	# FIXME: Use itertools.pairwise
 	for j, d in enumerate(diphones[:-1]):
 		left = d
 		right = diphones[j+1]
@@ -186,11 +188,11 @@ def synthesize_word(word: str, output_sound):
 	espeak_data = []
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
 		# FIXME: Skip pauses when they're not at the edges (can't add silence this way... ;'()
-		"""
+
 		if 0 < i < len(espeak_phonemes)-1:
 			if phoneme.startswith("_"):
 				continue
-		"""
+
 
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
 		if phoneme == "ɡ":
@@ -200,6 +202,7 @@ def synthesize_word(word: str, output_sound):
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
 		# We'll store everything in a list of dicts...
 		d = {
+			"idx": len(espeak_data),	# We'll need to poke at the actual data inside a pairwise iterator, so remember the index
 			"phoneme": phoneme,
 			"start": float(start),
 			"end": float(end),
@@ -209,11 +212,15 @@ def synthesize_word(word: str, output_sound):
 		espeak_data.append(d)
 
 	# NOTE: Make sure we iterate on a list, and not a string, to handle diacritics properly...
-	for i, label in enumerate(espeak_data[:-1]):
-		phone1 = label["phoneme"]
-		phone2 = espeak_data[i+1]["phoneme"]
+	for i, pair in enumerate(itertools.pairwise(espeak_data)):
+		left  = pair[0]
+		right = pair[1]
+
+		phone1 = left["phoneme"]
+		phone2 = right["phoneme"]
 
 		# NOTE: Handle word gaps manually, as we only annotate "long" diphones on *sentence* edges..
+		"""
 		if 0 < i < len(espeak_data)-1:
 			if phone1.startswith("_") or phone2.startswith("_"):
 				# Create & insert a silence
@@ -223,27 +230,30 @@ def synthesize_word(word: str, output_sound):
 				# Insert it w/o metadata, we don't need it for PSOLA later
 				output_sound = output_sound.concatenate([output_sound, silence])
 				continue
+		"""
 
 		extraction, diphone_data = extract_diphone(phone1, phone2, diphones)
 
 		# Concat
 		if extraction != None and diphone_data != None:
 			ppr = pprint.PrettyPrinter(indent=4, sort_dicts=True)
+
 			# Compute phoneme position in the concatenated stream, keeping in mind that two different diphones contribute to one phoneme...
+			left_i = left["idx"]
 			#print("starting espeak_data (left):")
-			#ppr.pprint(espeak_data[i])
-			#print("starting espeak_data (right):")
-			#ppr.pprint(espeak_data[i+1])
-
+			#ppr.pprint(espeak_data[left_i])
 			left_pos = output_sound.duration
-			espeak_data[i]["concat_start"]    = espeak_data[i].get("concat_start", left_pos)
-			espeak_data[i]["concat_duration"] = espeak_data[i].get("concat_duration", 0.0) + diphone_data[0]["extracted_duration"]
-			espeak_data[i]["concat_end"]      = espeak_data[i]["concat_start"] + espeak_data[i]["concat_duration"]
+			espeak_data[left_i]["concat_start"]    = espeak_data[left_i].get("concat_start", left_pos)
+			espeak_data[left_i]["concat_duration"] = espeak_data[left_i].get("concat_duration", 0.0) + diphone_data[0]["extracted_duration"]
+			espeak_data[left_i]["concat_end"]      = espeak_data[left_i]["concat_start"] + espeak_data[left_i]["concat_duration"]
 
-			right_pos = espeak_data[i]["concat_end"]
-			espeak_data[i+1]["concat_start"]    = espeak_data[i+1].get("concat_start", right_pos)
-			espeak_data[i+1]["concat_duration"] = espeak_data[i+1].get("concat_duration", 0.0) + diphone_data[1]["extracted_duration"]
-			espeak_data[i+1]["concat_end"]      = espeak_data[i+1]["concat_start"] + espeak_data[i+1]["concat_duration"]
+			right_i = right["idx"]
+			#print("starting espeak_data (right):")
+			#ppr.pprint(espeak_data[right_i])
+			right_pos = espeak_data[left_i]["concat_end"]
+			espeak_data[right_i]["concat_start"]    = espeak_data[right_i].get("concat_start", right_pos)
+			espeak_data[right_i]["concat_duration"] = espeak_data[right_i].get("concat_duration", 0.0) + diphone_data[1]["extracted_duration"]
+			espeak_data[right_i]["concat_end"]      = espeak_data[right_i]["concat_start"] + espeak_data[right_i]["concat_duration"]
 			# Sanity check...
 			# NOTE:
 			#	- In diphone_data:
@@ -254,11 +264,11 @@ def synthesize_word(word: str, output_sound):
 			print("diphone_data (left):")
 			ppr.pprint(diphone_data[0])
 			print("espeak_data (left):")
-			ppr.pprint(espeak_data[i])
+			ppr.pprint(espeak_data[left_i])
 			print("diphone_data (right):")
 			ppr.pprint(diphone_data[1])
 			print("espeak_data (right):")
-			ppr.pprint(espeak_data[i+1])
+			ppr.pprint(espeak_data[right_i])
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
