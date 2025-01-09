@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+# Whee, colors!
+from colorama import just_fix_windows_console
+# Make the Windows terminal handle ANSI escape sequences sanely...
+just_fix_windows_console()
+from rich import pretty, print
+pretty.install()
+
 import itertools
 import parselmouth as pm
 import textgrids as tg
@@ -301,8 +308,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
-			# FIXME: Make it red
-			print(f"!! Failed to extract diphone {phone1}{phone2}")
+			print(f"[bold red]!! Failed to extract diphone[/bold red] [bold green]{phone1}{phone2}[/bold green]")
 		# That was a real dihone extraction, clear the word gap tracking...
 		real_left, real_right = None, None
 	return (output_sound, espeak_data)

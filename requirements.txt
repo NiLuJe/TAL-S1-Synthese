@@ -1,3 +1,6 @@
 praat-parselmouth
 praat-textgrids
 librosa
+colorama
+termcolor
+rich
