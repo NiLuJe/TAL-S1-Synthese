@@ -7,6 +7,7 @@ from pathlib import Path
 import pprint
 
 # Data types for typing annotations
+from typing import Any
 from textgrids import Tier
 from parselmouth import Sound, Data
 
@@ -25,9 +26,9 @@ OUTPUT_DIR = (BASE_DIR / "output")
 SOUND_FILE = (DATA_DIR / "enregistrement.wav").as_posix()
 GRID_FILE =  (DATA_DIR / "enregistrement.TextGrid").as_posix()
 # Output files
-OUTPUT_WAV = (OUTPUT_DIR / "raw_concat.wav").as_posix()
-OUTPUT_SYNTHESIZED_WAV =  (OUTPUT_DIR / "espeak-synth.wav").as_posix()
-OUTPUT_SYNTHESIZED_GRID = (OUTPUT_DIR / "espeak-synth.TextGrid").as_posix()
+CONCAT_WAV = (OUTPUT_DIR / "raw_concat.wav").as_posix()
+ESPEAK_WAV =  (OUTPUT_DIR / "espeak-synth.wav").as_posix()
+ESPEAK_GRID = (OUTPUT_DIR / "espeak-synth.TextGrid").as_posix()
 OUTPUT_FINAL_WAV =  (OUTPUT_DIR / "result.wav").as_posix()
 
 # Sentence list
@@ -41,7 +42,7 @@ SENTENCES = [
 # Settings
 SETTINGS = {
 	# For eSpeak
-	"voice": "Male6",
+	"voice": "Male6", # m6 seems to match the default for roa/fr in espeak-ng...
 	"word_gap": 0.01, # in seconds
 	"pitch_multiplier": 1.0, # 0.5-2.0
 	"pitch_range_multiplier": 1.0, # 0-2.0
@@ -76,7 +77,7 @@ DIPHONES_TIER = DIPHONES_GRID["phone"]
 # Generate a small slice of silence as our initial sound object
 CONCAT_SOUND = pm.praat.call("Create Sound from formula", "silence", 1, 0, SETTINGS["word_gap"], 16000, str(0))
 
-def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier, pp: Data) -> tuple[Sound | None, tuple[dict, dict] | None]:
+def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier, pp: Data) -> tuple[Sound | None, tuple[dict[str, Any], dict[str, Any]] | None]:
 	"""
 	Extract the diphone phoneme_1 + phoneme_2 from the Sound sound via the Tier diphones & pp PointProcess.
 	Returns a 2-element tuple composed of the Sound object, and a tuple of 2 dictionaries with metadata from the individual phones.
@@ -139,11 +140,15 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier
 			return (sound.extract_part(mid_left, mid_right, pm.WindowShape.RECTANGULAR, 1, False), diphone_data)
 	return (None, None)
 
-# FIXME: Feed the full sentence to espeak, duh'
-def synthesize_word(word: str, output_sound: Sound):
-	print(f"synthesize_word on {word}")
-	# TODO: Test voices
-	# NOTE: m6 seems to match the default for roa/fr in espeak-ng...
+def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str) -> list[dict[str, Any]]:
+	"""
+	Synthesize the sentence sentence via Praat's eSpeak implementation.
+	Save the results (sound & grid) to output_sound_path & output_grid_path, respectively.
+	Returns a list of dictionaries with metadata about each phoneme generated,
+	to be used for PSOLA manipulations later on.
+	"""
+
+	print(f"espeak_sentence: {sentence}")
 	praat_synth = pm.praat.call("Create SpeechSynthesizer", "French (France)", SETTINGS["voice"])
 	# Setup espeak to use XSampa, and honor our settings
 	pm.praat.call(praat_synth,
@@ -154,7 +159,7 @@ def synthesize_word(word: str, output_sound: Sound):
 				  SETTINGS["pitch_range_multiplier"],
 				  SETTINGS["wpm"],
 				  "Kirshenbaum_espeak")
-	text_synth, sound_synth = pm.praat.call(praat_synth, "To Sound", word, "yes")
+	text_synth, sound_synth = pm.praat.call(praat_synth, "To Sound", sentence, "yes")
 	n = pm.praat.call(text_synth, "Get number of intervals", 4)
 
 	# Strip the trailing _: (long pause on punctuation marks), _ (end of word pause) label pair, if any
@@ -165,23 +170,19 @@ def synthesize_word(word: str, output_sound: Sound):
 			break
 
 	# Save the espeak synth for analysis & comparison
-	text_synth.save(OUTPUT_SYNTHESIZED_GRID)
-	sound_synth.save(OUTPUT_SYNTHESIZED_WAV, "WAV")
+	text_synth.save(output_grid_path)
+	sound_synth.save(output_sound_path, "WAV")
 
 	pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
 
-	# Includes empty intervals (word boundaries)
-	# FIXME: Speaking of word boundaries... We've only recorded *sentence* boundaries diphones, not *word* boundaries ones...
-	#        So we'll have some more diphones to record?
-	#        (Because just annotating extra boundaries did not go well w/ faure, c.f., /(a)vɔdka/)
-	# See NOTE above, we might just need to feed full sentences to espeak instead of word per word...
-	# FIXME: We still get those, so, basically, just drop _ when they're not at the edge of the list.
+	# NOTE: This includes word-gaps, and silences on punctuation marks.
+	#       See the whole skip_word_gaps codepaths...
 	espeak_phonemes = [pm.praat.call(text_synth, "Get label of interval", 4, i + 1) for i in range(n)]
 	print(f"espeak_phonemes: {espeak_phonemes}")
 	# Replace empty phonemes w/ an underscore
 	espeak_phonemes = ["_" if x == "" else x for x in espeak_phonemes]
 
-	# Compute the f0 mean of each phoneme (via Praat's "Get Mean")
+	# We'll need those to compute the f0 mean of each phoneme (via Praat's "Get Mean")
 	espeak_phonemes_start_ts = [pm.praat.call(text_synth, "Get start time of interval", 4, i + 1) for i in range(n)]
 	espeak_phonemes_end_ts   = [pm.praat.call(text_synth, "Get end time of interval", 4, i + 1) for i in range(n)]
 
@@ -194,7 +195,7 @@ def synthesize_word(word: str, output_sound: Sound):
 	# Sanity check
 	print(f"espeak transcription: {"".join(espeak_phonemes)}")
 
-	# Zip it!
+	# Zip it all together!
 	espeak_data = []
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
 		# NOTE: When we don't want to insert silences at word-gaps, just skip them entirely.
@@ -213,7 +214,7 @@ def synthesize_word(word: str, output_sound: Sound):
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
 		# We'll store everything in a list of dicts...
 		d = {
-			"idx": len(espeak_data),	# We'll need to poke at the actual data inside a pairwise iterator, so remember the index
+			"idx": len(espeak_data), # We'll need to poke at the actual data inside a pairwise iterator, so remember the index
 			"phoneme": phoneme,
 			"start": float(start),
 			"end": float(end),
@@ -221,6 +222,11 @@ def synthesize_word(word: str, output_sound: Sound):
 			"f0": float(mean_f0),
 		}
 		espeak_data.append(d)
+	return espeak_data
+
+def synthesize_sentence(sentence: str, output_sound: Sound):
+	# Let eSpeak do its thing first
+	espeak_data = espeak_sentence(sentence, ESPEAK_WAV, ESPEAK_GRID)
 
 	# NOTE: Make sure we iterate on a list, and not a string, to handle diacritics properly...
 	real_left, real_right = None, None
