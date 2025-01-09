@@ -51,8 +51,10 @@ pp = pm.praat.call(sound, "To PointProcess (zeroes)", 1, "yes", "no")
 diphones = grid["phone"]
 # NOTE: Our grid was initially populated by Praat's Annotate > To TextGrd (silences) function.
 #       At the time, we labeled silences with an empty label, and speech with an asterism.
-#       Strip those out.
-diphones = Tier([x for x in diphones if x.text != "" and not x.text.startswith("*")])
+#       Since we only want to match *consecutive* diphones, keeping those serves us well,
+#       as it prevents us from skipping over labels when matching on a diphone,
+#       which would risk mixing the wrong phones together...
+#       This is especially important since we re-recorded a few logatomes missed during the initial recording *at the end* of the file...
 
 # Extract a small slice of silence as our initial sound object.
 concatenated_sound = sound.extract_part(0, 0.01, pm.WindowShape.RECTANGULAR, 1, False)
