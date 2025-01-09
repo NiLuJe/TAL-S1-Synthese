@@ -56,6 +56,7 @@ SETTINGS = {
 	"wpm": 175, # 80-450
 	# Behavior tweaks
 	"skip_word_gaps": False, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
+	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
 }
 
 # Utility functions
@@ -356,24 +357,31 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 			# No such restriction for duration
 			# scale extracted phoneme to espeak phoneme's duration
 			scale = target_duration / duration
-			print(f"scaling point @ {mid} by {scale}")
-			# Args: time, scale
-			# FIXME: Do we need more points? Right now, Praat should lerp between points, which is probably good enough.
-			pm.praat.call(duration_tier, "Add point", mid, scale)
 
-			# Another viable approach: 2 points, at start & end; in which case, a few ms away, to make the points unique between consecutive phonemes.
-			# NOTE: This matches how the Praat manual explains that sort of stuff...
-			# The best approach miight depend on the voice, or the "shape" of the scaling, basically?
-			#pm.praat.call(duration_tier, "Add point", start + 0.001, scale)
-			#pm.praat.call(duration_tier, "Add point", end - 0.001, scale)
-
-			#pm.praat.call(duration_tier, "Add point", start + 0.001, 1)
-			#pm.praat.call(duration_tier, "Add point", end - 0.001, 1)
-			#pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
-			#pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
+			match SETTINGS["duration_points"]:
+				case "mid":
+					print(f"scaling point @ {mid} by {scale}")
+					# Args: time, scale
+					pm.praat.call(duration_tier, "Add point", mid, scale)
+				case "edges":
+					print(f"scaling from {start} to {end} by {scale}")
+					# NOTE: This matches how the Praat manual explains that sort of stuff...
+					# The best approach miiiight actually depend on the voice, or the "shape" of the scaling, basically?
+					pm.praat.call(duration_tier, "Add point", start + 0.001, scale)
+					pm.praat.call(duration_tier, "Add point", end - 0.001, scale)
+				case "bracketed":
+					print(f"bracketed scaling from {start} to {end} by {scale}")
+					pm.praat.call(duration_tier, "Add point", start + 0.001, 1)
+					pm.praat.call(duration_tier, "Add point", end - 0.001, 1)
+					pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
+					pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
+				case _:
+					print(f"[red]!! Invalid `duration_points` setting: {SETTINGS["duration_points"]}[/red]")
 
 	# Apply the PSOLA manipulations
 	# NOTE: Since we apply everything at once, I assume this doesn't skew our timestamp positions given the duration changes?
+	#       AFAICT, there's a TextGrid time scaling function to deal with this when you need to preserve a TextGrid.
+	#       We don't, so we're good :).
 	pm.praat.call([manip, pitch_tier], "Replace pitch tier")
 	pm.praat.call([manip, duration_tier], "Replace duration tier")
 	return pm.praat.call(manip, "Get resynthesis (overlap-add)")
