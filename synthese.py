@@ -46,7 +46,7 @@ SETTINGS = {
 	"pitch_range_multiplier": 1.0, # 0-2.0
 	"wpm": 175, # 80-450
 	# Behavior tweaks
-	"skip_word_gaps": True,	# Add word_gap silences on espeak word gaps if False, otherwise, skip them
+	"skip_word_gaps": False, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
 }
 
 # Utility functions
