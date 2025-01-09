@@ -327,7 +327,7 @@ item []:
         intervals [79]:
             xmin = 30.2652911276128 
             xmax = 30.374191729345384 
-            text = "R" 
+            text = "r" 
         intervals [80]:
             xmin = 30.374191729345384 
             xmax = 30.571598214285707 
@@ -343,7 +343,7 @@ item []:
         intervals [83]:
             xmin = 31.411821702428053 
             xmax = 31.502070819885994 
-            text = "R" 
+            text = "r" 
         intervals [84]:
             xmin = 31.502070819885994 
             xmax = 31.694000609679886 
@@ -623,7 +623,7 @@ item []:
         intervals [153]:
             xmin = 49.01946082506319 
             xmax = 49.09286344059566 
-            text = "o" 
+            text = "O" 
         intervals [154]:
             xmin = 49.09286344059566 
             xmax = 49.22302678571428 
@@ -643,11 +643,11 @@ item []:
         intervals [158]:
             xmin = 50.373426318048665 
             xmax = 50.48653854526262 
-            text = "o" 
+            text = "O" 
         intervals [159]:
             xmin = 50.48653854526262 
             xmax = 50.6056673803071 
-            text = "R" 
+            text = "r" 
         intervals [160]:
             xmin = 50.6056673803071 
             xmax = 50.81159821428571 
@@ -663,7 +663,7 @@ item []:
         intervals [163]:
             xmin = 51.632102756197035 
             xmax = 51.80297441858407 
-            text = "R" 
+            text = "r" 
         intervals [164]:
             xmin = 51.80297441858407 
             xmax = 51.90224844778781 
