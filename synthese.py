@@ -70,8 +70,10 @@ def format_duration(seconds: float) -> str:
 
 def print_sound_info(sound: Sound):
 	"""Print detailed information about a Sound object"""
+
 	print(sound.info(), end="")
 	print(f"Duration: {format_duration(sound.duration)}")
+
 
 # Global objects
 DIPHONES_SOUND = pm.Sound(SOUND_FILE)
@@ -79,7 +81,7 @@ DIPHONES_GRID = tg.TextGrid(GRID_FILE)
 DIPHONES_PP = pm.praat.call(DIPHONES_SOUND, "To PointProcess (zeroes)", 1, "yes", "no")
 # NOTE: Layer name
 DIPHONES_TIER = DIPHONES_GRID["phone"]
-# NOTE: Our grid was initially populated by Praat's Annotate > To TextGrd (silences) function.
+# NOTE: Our grid was initially populated by Praat's Annotate > To TextGrid (silences) function.
 #       At the time, we labeled silences with an empty label, and speech with an asterism.
 #       Since we only want to match *consecutive* diphones, keeping those serves us well,
 #       as it prevents us from skipping over labels when matching on a diphone,
@@ -89,6 +91,7 @@ DIPHONES_TIER = DIPHONES_GRID["phone"]
 # Generate a small slice of silence as our initial sound object
 # Args: obj name, end, start, duration, samplerate, formula
 CONCAT_SOUND = pm.praat.call("Create Sound from formula", "concat", 1, 0, SETTINGS["word_gap"], 16000, str(0))
+
 
 def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier, pp: Data) -> tuple[Sound | None, tuple[dict[str, Any], dict[str, Any]] | None]:
 	"""
@@ -244,6 +247,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 	Returns a tuple with said sound object, and a list of metadata dictionaries for each phoneme,
 	like `espeak_sentence`.
 	"""
+
 	# Let eSpeak do its thing first
 	espeak_data = espeak_sentence(sentence, ESPEAK_WAV, ESPEAK_GRID)
 
@@ -326,13 +330,14 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 	Returns a new Sound object with the manipulations applied via PSOLA.
 	"""
 
-	# Compute PSOLA manipulations on the full conatenated sound, in order to have enough data to handle short phones.
-	# We'll just have to find our diphones positions again, hence the metadata in `sentence_data` ;).
+	# Compute PSOLA manipulations on the full concatenated sound, in order to have enough data to handle short phones.
+	# We'll just have to find our phoneme positions again, hence the metadata in `sentence_data` ;).
 	manip = pm.praat.call(concatenated_sound, "To Manipulation", 0.01, 75, 600)
 	pitch_tier = pm.praat.call(manip, "Extract pitch tier")
 	pm.praat.call(pitch_tier, "Remove points between", 0, concatenated_sound.duration)
 	duration_tier = pm.praat.call(manip, "Extract duration tier")
 
+	# Iterate phoneme by phoneme over their metadata
 	for i, phoneme_data in enumerate(sentence_data):
 			phoneme = phoneme_data["phoneme"]
 
@@ -357,7 +362,7 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 				# Args: time, freq
 				pm.praat.call(pitch_tier, "Add point", mid, f0)
 			# No such restriction for duration
-			# scale extracted phoneme to espeak phoneme's duration
+			# scale extracted phoneme to eSpeak phoneme's duration
 			scale = target_duration / duration
 
 			# We can experiment with a few variations on how to apply the duration...
@@ -379,7 +384,7 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 					pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
 					pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
 				case _:
-					print(f"[red]!! Invalid `duration_points` setting: {SETTINGS["duration_points"]}[/red]")
+					print(f"[red]!! Invalid `duration_points` setting:[/red] [green]{SETTINGS["duration_points"]}[/green]")
 
 	# Apply the PSOLA manipulations
 	# NOTE: Since we apply everything at once, I assume this doesn't skew our timestamp positions given the duration changes?
