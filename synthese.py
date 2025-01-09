@@ -82,7 +82,8 @@ DIPHONES_TIER = DIPHONES_GRID["phone"]
 #       This is especially important since we re-recorded a few logatomes missed during the initial recording *at the end* of the file...
 
 # Generate a small slice of silence as our initial sound object
-CONCAT_SOUND = pm.praat.call("Create Sound from formula", "silence", 1, 0, SETTINGS["word_gap"], 16000, str(0))
+# Args: obj name, end, start, duration, samplerate, formula
+CONCAT_SOUND = pm.praat.call("Create Sound from formula", "concat", 1, 0, SETTINGS["word_gap"], 16000, str(0))
 
 def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier, pp: Data) -> tuple[Sound | None, tuple[dict[str, Any], dict[str, Any]] | None]:
 	"""
@@ -258,11 +259,10 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 			# NOTE: We drop them entirely from espeak_data w/ skip_word_gaps, so no need to re-check that setting here
 			if phone1.startswith("_") or phone2.startswith("_"):
 				print("Inserting a word gap silence")
-				# Create a silence
+				# Create a chunk of silence
 				duration = SETTINGS["word_gap"] * 2 if phone1.endswith(":") or phone2.endswith(":") else SETTINGS["word_gap"]
-				# Args: obj name, end, start, duration, samplerate, formula
 				silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
-				# Insert it w/o metadata, we don't need it for PSOLA later
+				# Insert it w/o metadata, we won't need it for PSOLA later
 				output_sound = output_sound.concatenate([output_sound, silence])
 				# Remember the proper phoneme to use for the next iteration (i.e., skip over the silences while keeping track of the previous phone)...
 				if phone2.startswith("_"):
