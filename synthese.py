@@ -8,7 +8,7 @@ import pprint
 
 # Data types for typing annotations
 from textgrids import Tier
-from parselmouth import Sound
+from parselmouth import Sound, Data
 
 # TODO: 1 vs. 3 point per pitch contours, and keep it as an option
 # TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
@@ -60,11 +60,12 @@ def format_duration(seconds: float) -> str:
 	ms = str(round(ms, 3)).split(".")[1]
 	return "{:02d}:{:02d}.{:s}".format(int(minutes), int(seconds), ms)
 
-sound = pm.Sound(SOUND_FILE)
-grid = tg.TextGrid(GRID_FILE)
-pp = pm.praat.call(sound, "To PointProcess (zeroes)", 1, "yes", "no")
+# Global objects
+DIPHONES_SOUND = pm.Sound(SOUND_FILE)
+DIPHONES_GRID = tg.TextGrid(GRID_FILE)
+DIPHONES_PP = pm.praat.call(DIPHONES_SOUND, "To PointProcess (zeroes)", 1, "yes", "no")
 # NOTE: Layer name
-diphones = grid["phone"]
+DIPHONES_TIER = DIPHONES_GRID["phone"]
 # NOTE: Our grid was initially populated by Praat's Annotate > To TextGrd (silences) function.
 #       At the time, we labeled silences with an empty label, and speech with an asterism.
 #       Since we only want to match *consecutive* diphones, keeping those serves us well,
@@ -72,13 +73,12 @@ diphones = grid["phone"]
 #       which would risk mixing the wrong phones together...
 #       This is especially important since we re-recorded a few logatomes missed during the initial recording *at the end* of the file...
 
-# Extract a small slice of silence as our initial sound object.
-concatenated_sound = sound.extract_part(0, 0.01, pm.WindowShape.RECTANGULAR, 1, False)
-diphones_sound = {}
+# Generate a small slice of silence as our initial sound object
+CONCAT_SOUND = pm.praat.call("Create Sound from formula", "silence", 1, 0, SETTINGS["word_gap"], 16000, str(0))
 
-def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier) -> tuple[Sound | None, tuple[dict, dict] | None]:
+def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier, pp: Data) -> tuple[Sound | None, tuple[dict, dict] | None]:
 	"""
-	Extract the diphone phoneme_1 + phoneme_2 from the Tier diphones.
+	Extract the diphone phoneme_1 + phoneme_2 from the Sound sound via the Tier diphones & pp PointProcess.
 	Returns a 2-element tuple composed of the Sound object, and a tuple of 2 dictionaries with metadata from the individual phones.
 	Returns (None, None) on extraction failure.
 	"""
@@ -140,7 +140,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier) -> tuple[Sou
 	return (None, None)
 
 # FIXME: Feed the full sentence to espeak, duh'
-def synthesize_word(word: str, output_sound):
+def synthesize_word(word: str, output_sound: Sound):
 	print(f"synthesize_word on {word}")
 	# TODO: Test voices
 	# NOTE: m6 seems to match the default for roa/fr in espeak-ng...
@@ -254,7 +254,7 @@ def synthesize_word(word: str, output_sound):
 				# And skip right to the next iteration
 				continue
 
-		extraction, diphone_data = extract_diphone(phone1, phone2, diphones)
+		extraction, diphone_data = extract_diphone(phone1, phone2, __DIPHONES_SOUND, __DIPHONES_TIER, __DIPHONES_PP)
 
 		# Concat
 		if extraction != None and diphone_data != None:
