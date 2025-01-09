@@ -119,6 +119,14 @@ def synthesize_word(word: str, output_sound):
 	text_synth, sound_synth = pm.praat.call(praat_synth, "To Sound", word, "yes")
 	n = pm.praat.call(text_synth, "Get number of intervals", 4)
 
+	# Strip the trailing _: (long pause on punctuation marks), _ (end of word pause) label pair, if any
+	for i in range(n, 0, -1):
+		label = pm.praat.call(text_synth, "Get label of interval", 4, i)
+		print(i, label)
+		if label == "_:":
+			n = i-1
+			break
+
 	# Save the espeak synth for analysis & comparison
 	text_synth.save(OUTPUT_SYNTHESIZED_GRID)
 	sound_synth.save(OUTPUT_SYNTHESIZED_WAV, "WAV")
@@ -177,7 +185,7 @@ def synthesize_word(word: str, output_sound):
 		if i > 1 and phoneme.startswith("_"):
 			continue
 		# FIXME: Skip non-terminal trailing pauses
-		if i < len(espeak_phonemes) and phone2.startswith("_"):
+		if i < len(espeak_phonemes)-2 and phone2.startswith("_"):
 			continue
 
 		extraction, diphone_data = extract_diphone(phone1, phone2, diphones)
