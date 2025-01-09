@@ -244,16 +244,17 @@ pm.praat.call(pitch_tier, "Remove points between", 0, concatenated_sound.duratio
 duration_tier = pm.praat.call(manip, "Extract duration tier")
 
 for phoneme_data in sentence_data:
+	print(f"phoneme: {phoneme_data["phoneme"]}")
 	# In the concatenated stream
 	start = phoneme_data["concat_start"]
 	end = phoneme_data["concat_end"]
 	mid = (start + end) / 2
 	duration = phoneme_data["concat_duration"]
-	print(f"concat duration: {duration}")
+	print(f"concat duration: {duration} ({start} -> {end})")
 	# From espeak
 	f0 = phoneme_data["f0"]
 	target_duration = phoneme_data["duration"]
-	print(f"target duration: {target_duration}")
+	print(f"target duration: {target_duration} ({phoneme_data["start"]} -> {phoneme_data["end"]})")
 	# We need an f0 ;)
 	if f0 > 0:
 		# Args: time, freq
