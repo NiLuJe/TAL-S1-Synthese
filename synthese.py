@@ -122,7 +122,6 @@ def synthesize_word(word: str, output_sound):
 	# Strip the trailing _: (long pause on punctuation marks), _ (end of word pause) label pair, if any
 	for i in range(n, 0, -1):
 		label = pm.praat.call(text_synth, "Get label of interval", 4, i)
-		print(i, label)
 		if label == "_:":
 			n = i-1
 			break
@@ -159,7 +158,17 @@ def synthesize_word(word: str, output_sound):
 
 	# Zip it!
 	espeak_data = []
-	for phoneme, start, end in zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts):
+	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
+		# FIXME: Skip pauses when they're not at the edges (can't add silence ths way... ;'()
+		if 0 < i < len(espeak_phonemes)-1:
+			if phoneme.startswith("_"):
+				continue
+
+		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
+		if phoneme == "ɡ":
+			# We prefer the ASCII `g` (U+0067)
+			phoneme = "g"
+
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
 		# We'll store everything in a list of dicts...
 		d = {
@@ -172,21 +181,9 @@ def synthesize_word(word: str, output_sound):
 		espeak_data.append(d)
 
 	# NOTE: Make sure we iterate on a list, and not a string, to handle diacritics properly...
-	for i, phoneme in enumerate(espeak_phonemes[:-1]):
-		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
-		if phoneme == "ɡ":
-			# We prefer the ASCII `g` (U+0067)
-			phoneme = "g"
-
-		phone1 = phoneme
-		phone2 = espeak_phonemes[i+1]
-
-		# FIXME: Skip non-initial leading pauses (insert inter-word silence instead, times two for _:)
-		if i > 1 and phoneme.startswith("_"):
-			continue
-		# FIXME: Skip non-terminal trailing pauses
-		if i < len(espeak_phonemes)-2 and phone2.startswith("_"):
-			continue
+	for i, label in enumerate(espeak_data[:-1]):
+		phone1 = label["phoneme"]
+		phone2 = espeak_data[i+1]["phoneme"]
 
 		extraction, diphone_data = extract_diphone(phone1, phone2, diphones)
 
@@ -226,9 +223,11 @@ def synthesize_word(word: str, output_sound):
 
 # FIXME: Or sys.argv[1]
 sentence = SENTENCES[0]
+
 def synthesize_sentence(sentence: str, output_sound):
 	output_sound, sentence_data = synthesize_word(sentence, output_sound)
 	return output_sound, sentence_data
+
 concatenated_sound, sentence_data = synthesize_sentence(sentence, concatenated_sound)
 
 # Snapshot the concatenation results before PSOLA
