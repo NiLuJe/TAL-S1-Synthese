@@ -233,7 +233,9 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 
 def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list[dict[str, Any]]]:
 	"""
-	Synthesize sentence `sentence`
+	Synthesize sentence `sentence`, and concatenate the results in `output_sound`.
+	Returns a tuple with said sound object, and a list of metadata dictionaries for each phoneme,
+	like `espeak_sentence`.
 	"""
 	# Let eSpeak do its thing first
 	espeak_data = espeak_sentence(sentence, ESPEAK_WAV, ESPEAK_GRID)
@@ -313,18 +315,15 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 		real_left, real_right = None, None
 	return (output_sound, espeak_data)
 
+def manipulate_sound():
+
 # FIXME: Or sys.argv[1]
 sentence = SENTENCES[0]
-
-def synthesize_sentence(sentence: str, output_sound):
-	output_sound, sentence_data = synthesize_word(sentence, output_sound)
-	return output_sound, sentence_data
-
-concatenated_sound, sentence_data = synthesize_sentence(sentence, concatenated_sound)
+output_sound, sentence_data = synthesize_sentence(sentence, CONCAT_SOUND)
 
 # Snapshot the concatenation results before PSOLA
-concatenated_sound.save(OUTPUT_WAV, "WAV")
-print(concatenated_sound.n_samples, concatenated_sound.get_total_duration(), format_duration(concatenated_sound.duration))
+output_sound.save(CONCAT_WAV, "WAV")
+print(output_sound.n_samples, output_sound.get_total_duration(), format_duration(output_sound.duration))
 
 # Compute PSOLA manipulations on the full conatenated sound, in order to have enough data to handle short phones.
 # We'll just have to find our diphones positions again ;).
