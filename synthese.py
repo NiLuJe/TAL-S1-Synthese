@@ -401,3 +401,7 @@ def synthesize():
 	# And, finally, save the final result!
 	modified_wav.save(OUTPUT_FINAL_WAV, "WAV")
 	print(modified_wav.n_samples, modified_wav.get_total_duration(), format_duration(modified_wav.duration))
+
+# Main entry-point
+if __name__ == "__main__":
+	synthesize()
