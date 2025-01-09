@@ -79,8 +79,8 @@ CONCAT_SOUND = pm.praat.call("Create Sound from formula", "silence", 1, 0, SETTI
 
 def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier, pp: Data) -> tuple[Sound | None, tuple[dict[str, Any], dict[str, Any]] | None]:
 	"""
-	Extract the diphone phoneme_1 + phoneme_2 from the Sound sound via the Tier diphones & pp PointProcess.
-	Returns a 2-element tuple composed of the Sound object, and a tuple of 2 dictionaries with metadata from the individual phones.
+	Extract the diphone `phoneme_1` + `phoneme_2` from the Sound `sound` via the Tier `diphones` & PointProcess `pp`.
+	Returns a 2-element tuple composed of a Sound object, and a tuple of 2 dictionaries with metadata for the individual phones.
 	Returns (None, None) on extraction failure.
 	"""
 
@@ -142,8 +142,8 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier
 
 def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str) -> list[dict[str, Any]]:
 	"""
-	Synthesize the sentence sentence via Praat's eSpeak implementation.
-	Save the results (sound & grid) to output_sound_path & output_grid_path, respectively.
+	Synthesize sentence `sentence` via Praat's eSpeak implementation.
+	Save the results (sound & grid) to `output_sound_path` & `output_grid_path`, respectively.
 	Returns a list of dictionaries with metadata about each phoneme generated,
 	to be used for PSOLA manipulations later on.
 	"""
@@ -224,12 +224,15 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 		espeak_data.append(d)
 	return espeak_data
 
-def synthesize_sentence(sentence: str, output_sound: Sound):
+def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list[dict[str, Any]]]:
+	"""
+	Synthesize sentence `sentence`
+	"""
 	# Let eSpeak do its thing first
 	espeak_data = espeak_sentence(sentence, ESPEAK_WAV, ESPEAK_GRID)
 
-	# NOTE: Make sure we iterate on a list, and not a string, to handle diacritics properly...
 	real_left, real_right = None, None
+	# NOTE: Make sure we iterate on a list, and not a string, to handle diacritics properly...
 	for i, pair in enumerate(itertools.pairwise(espeak_data)):
 		# Trickery needed to deal with word-gaps...
 		left  = real_left or pair[0]
@@ -260,7 +263,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound):
 				# And skip right to the next iteration
 				continue
 
-		extraction, diphone_data = extract_diphone(phone1, phone2, __DIPHONES_SOUND, __DIPHONES_TIER, __DIPHONES_PP)
+		extraction, diphone_data = extract_diphone(phone1, phone2, DIPHONES_SOUND, DIPHONES_TIER, DIPHONES_PP)
 
 		# Concat
 		if extraction != None and diphone_data != None:
@@ -298,7 +301,8 @@ def synthesize_sentence(sentence: str, output_sound: Sound):
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
-			print(f"Failed to extract diphone {phone1}{phone2}")
+			# FIXME: Make it red
+			print(f"!! Failed to extract diphone {phone1}{phone2}")
 		# That was a real dihone extraction, clear the word gap tracking...
 		real_left, real_right = None, None
 	return (output_sound, espeak_data)
