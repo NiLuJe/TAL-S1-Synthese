@@ -95,6 +95,8 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 					"duration": left.dur,
 					"diphone_pos": "left",
 					"mid": mid_left,
+					"extracted_start": mid_left,
+					"extracted_end": left.xmax,
 					"extracted_duration": left.xmax - mid_left,	# i.e., duration / 2
 				},
 				{
@@ -104,6 +106,8 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 					"duration": right.dur,
 					"diphone_pos": "right",
 					"mid": mid_right,
+					"extracted_start": right.xmin,
+					"extracted_end": mid_right,
 					"extracted_duration": mid_right - right.xmin, # i.e., also duration / 2
 				}
 			)
