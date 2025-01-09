@@ -104,7 +104,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 					"duration": right.dur,
 					"diphone_pos": "right",
 					"mid": mid_right,
-					"extracted_duration": right.xmax - mid_right,
+					"extracted_duration": mid_right - right.xmin, # i.e., also duration / 2
 				}
 			)
 			# NOTE: Using non-rectangular window shapes (e.g., KAISER1) affects (i.e., attenuates) the edges too much for our use case, so stick to rectangular.
@@ -260,17 +260,16 @@ for phoneme_data in sentence_data:
 		pm.praat.call(pitch_tier, "Add point", mid, f0)
 	# No such restriction for duration
 	# scale extracted phoneme to espeak phoneme's duration
-	# FIXME: Other way 'round?
 	scale = target_duration / duration
 	print(f"scaling point @ {mid} by {scale}")
 	# Args: time, scale
 	# FIXME: Do we need more points? Right now, Praat should lerp between points, which is probably good enough.
 	# Another viable approach: 2 points, at start & end; in which case, a few ms away, to make the points unique between consecutive phonemes.
-	#pm.praat.call(duration_tier, "Add point", start + 0.001, 1)
-	#pm.praat.call(duration_tier, "Add point", end - 0.001, 1)
-	pm.praat.call(duration_tier, "Add point", mid, scale)
-	#pm.praat.call(duration_tier, "Add point", start + 0.001, scale)
-	#pm.praat.call(duration_tier, "Add point", end - 0.001, scale)
+	pm.praat.call(duration_tier, "Add point", start + 0.001, 1)
+	pm.praat.call(duration_tier, "Add point", end - 0.001, 1)
+	#pm.praat.call(duration_tier, "Add point", mid, scale)
+	pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
+	pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
 
 # Apply the PSOLA manipulations
 # NOTE: Since we apply everything at once, I assume this doesn't skew our timestamp positions given the duration changes?
