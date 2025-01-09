@@ -185,7 +185,7 @@ def synthesize_word(word: str, output_sound):
 	# Zip it!
 	espeak_data = []
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
-		# FIXME: Skip pauses when they're not at the edges (can't add silence ths way... ;'()
+		# FIXME: Skip pauses when they're not at the edges (can't add silence this way... ;'()
 		if 0 < i < len(espeak_phonemes)-1:
 			if phoneme.startswith("_"):
 				continue
