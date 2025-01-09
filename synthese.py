@@ -36,6 +36,16 @@ SENTENCES = [
 	"C'est une voiture de collection de prestige. Il y en a plus que trois qui roulent dans le monde et moi... J'ai la numéro 4."
 ]
 
+# Settings
+SETTINGS = {
+	# For eSpeak
+	"voice": "Male6",
+	"word_gap": 0.01,
+	"pitch_multiplier": 1.0, # 0.5-2.0
+	"pitch_range_multiplier": 1.0, # 0-2.0
+	"wpm": 175, # 80-450
+}
+
 # Utility functions
 def format_duration(seconds: float) -> str:
 	"""Returns a MM:SS.sss string for the given input float in seconds"""
@@ -122,9 +132,16 @@ def synthesize_word(word: str, output_sound):
 	print(f"synthesize_word on {word}")
 	# TODO: Test voices
 	# NOTE: m6 seems to match the default for roa/fr in espeak-ng...
-	praat_synth = pm.praat.call("Create SpeechSynthesizer", "French (France)", "Male6")
-	# Setup espeak to use XSampa
-	pm.praat.call(praat_synth, "Speech output settings", 16000, 0.01, 1, 1, 175, "Kirshenbaum_espeak")
+	praat_synth = pm.praat.call("Create SpeechSynthesizer", "French (France)", SETTINGS["voice"])
+	# Setup espeak to use XSampa, and honor our settings
+	pm.praat.call(praat_synth,
+				  "Speech output settings",
+				  16000,
+				  SETTINGS["word_gap"],
+				  SETTINGS["pitch_multiplier"],
+				  SETTINGS["pitch_range_multiplier"],
+				  SETTINGS["wpm"],
+				  "Kirshenbaum_espeak")
 	text_synth, sound_synth = pm.praat.call(praat_synth, "To Sound", word, "yes")
 	n = pm.praat.call(text_synth, "Get number of intervals", 4)
 
