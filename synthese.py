@@ -186,9 +186,11 @@ def synthesize_word(word: str, output_sound):
 	espeak_data = []
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
 		# FIXME: Skip pauses when they're not at the edges (can't add silence this way... ;'()
+		"""
 		if 0 < i < len(espeak_phonemes)-1:
 			if phoneme.startswith("_"):
 				continue
+		"""
 
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
 		if phoneme == "ɡ":
@@ -210,6 +212,17 @@ def synthesize_word(word: str, output_sound):
 	for i, label in enumerate(espeak_data[:-1]):
 		phone1 = label["phoneme"]
 		phone2 = espeak_data[i+1]["phoneme"]
+
+		# NOTE: Handle word gaps manually, as we only annotate "long" diphones on *sentence* edges..
+		if 0 < i < len(espeak_data)-1:
+			if phone1.startswith("_") or phone2.startswith("_"):
+				# Create & insert a silence
+				duration = SETTINGS["word_gap"] if phone1.endswith(":") or phone2.endswith(":") else SETTINGS["word_gap"] / 2
+				# Args: obj name, end, start, duration, samplerate, formula
+				silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
+				# Insert it w/o metadata, we don't need it for PSOLA later
+				output_sound = output_sound.concatenate([output_sound, silence])
+				continue
 
 		extraction, diphone_data = extract_diphone(phone1, phone2, diphones)
 
