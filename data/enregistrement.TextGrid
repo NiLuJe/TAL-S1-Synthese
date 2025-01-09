@@ -8,7 +8,7 @@ size = 1
 item []: 
     item [1]:
         class = "IntervalTier" 
-        name = "silences" 
+        name = "phone" 
         xmin = 0 
         xmax = 266.674562 
         intervals: size = 610 
@@ -2450,5 +2450,5 @@ item []:
             text = "***" 
         intervals [610]:
             xmin = 263.64588392857144 
-            xmax = 265.874625 
+            xmax = 266.674562 
             text = "" 
