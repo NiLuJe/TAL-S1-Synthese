@@ -179,6 +179,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 
 	# Save the espeak synth for analysis & comparison
 	text_synth.save(output_grid_path)
+	# Format: also available via module constants, e.g., pm.SoundFileFormat.WAV
 	sound_synth.save(output_sound_path, "WAV")
 
 	pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
@@ -315,71 +316,80 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 		real_left, real_right = None, None
 	return (output_sound, espeak_data)
 
-def manipulate_sound():
+def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, Any]]) -> Sound:
+	"""
+	Iterate over `concatenated_sound` phone by phone, applying the f0 contour (if any) and duration of the matching phoneme from an espeak synth,
+	via the metadata available in `sentence_data` (as produced by `espeak_sentence` & `synthesize_sentence`).
+	Returns a new Sound object with the manipulations applied via PSOLA.
+	"""
 
-# FIXME: Or sys.argv[1]
-sentence = SENTENCES[0]
-output_sound, sentence_data = synthesize_sentence(sentence, CONCAT_SOUND)
+	# Compute PSOLA manipulations on the full conatenated sound, in order to have enough data to handle short phones.
+	# We'll just have to find our diphones positions again, hence the metadata in `sentence_data` ;).
+	manip = pm.praat.call(concatenated_sound, "To Manipulation", 0.01, 75, 600)
+	pitch_tier = pm.praat.call(manip, "Extract pitch tier")
+	pm.praat.call(pitch_tier, "Remove points between", 0, concatenated_sound.duration)
+	duration_tier = pm.praat.call(manip, "Extract duration tier")
 
-# Snapshot the concatenation results before PSOLA
-output_sound.save(CONCAT_WAV, "WAV")
-print(output_sound.n_samples, output_sound.get_total_duration(), format_duration(output_sound.duration))
+	for i, phoneme_data in enumerate(sentence_data):
+			phoneme = phoneme_data["phoneme"]
 
-# Compute PSOLA manipulations on the full conatenated sound, in order to have enough data to handle short phones.
-# We'll just have to find our diphones positions again ;).
-manip = pm.praat.call(concatenated_sound, "To Manipulation", 0.01, 75, 600)
-pitch_tier = pm.praat.call(manip, "Extract pitch tier")
-pm.praat.call(pitch_tier, "Remove points between", 0, concatenated_sound.duration)
-duration_tier = pm.praat.call(manip, "Extract duration tier")
+			# NOTE: Leave inter-word gaps we handled as silences alone
+			if 0 < i < len(sentence_data)-1:
+				if phoneme.startswith("_"):
+					continue
 
-for i, phoneme_data in enumerate(sentence_data):
-	phoneme = phoneme_data["phoneme"]
+			print(f"phoneme: {phoneme}")
+			# In the concatenated stream
+			start = phoneme_data["concat_start"]
+			end = phoneme_data["concat_end"]
+			mid = (start + end) / 2
+			duration = phoneme_data["concat_duration"]
+			print(f"concat duration: {duration} ({start} -> {end})")
+			# From espeak
+			f0 = phoneme_data["f0"]
+			target_duration = phoneme_data["duration"]
+			print(f"target duration: {target_duration} ({phoneme_data["start"]} -> {phoneme_data["end"]})")
+			# We need an f0 ;)
+			if f0 > 0:
+				# Args: time, freq
+				pm.praat.call(pitch_tier, "Add point", mid, f0)
+			# No such restriction for duration
+			# scale extracted phoneme to espeak phoneme's duration
+			scale = target_duration / duration
+			print(f"scaling point @ {mid} by {scale}")
+			# Args: time, scale
+			# FIXME: Do we need more points? Right now, Praat should lerp between points, which is probably good enough.
+			pm.praat.call(duration_tier, "Add point", mid, scale)
 
-	# NOTE: Leave inter-word gaps we handled as silences alone
-	if 0 < i < len(sentence_data)-1:
-		if phoneme.startswith("_"):
-			continue
+			# Another viable approach: 2 points, at start & end; in which case, a few ms away, to make the points unique between consecutive phonemes.
+			# NOTE: This matches how the Praat manual explains that sort of stuff...
+			# The best approach miight depend on the voice, or the "shape" of the scaling, basically?
+			#pm.praat.call(duration_tier, "Add point", start + 0.001, scale)
+			#pm.praat.call(duration_tier, "Add point", end - 0.001, scale)
 
-	print(f"phoneme: {phoneme}")
-	# In the concatenated stream
-	start = phoneme_data["concat_start"]
-	end = phoneme_data["concat_end"]
-	mid = (start + end) / 2
-	duration = phoneme_data["concat_duration"]
-	print(f"concat duration: {duration} ({start} -> {end})")
-	# From espeak
-	f0 = phoneme_data["f0"]
-	target_duration = phoneme_data["duration"]
-	print(f"target duration: {target_duration} ({phoneme_data["start"]} -> {phoneme_data["end"]})")
-	# We need an f0 ;)
-	if f0 > 0:
-		# Args: time, freq
-		pm.praat.call(pitch_tier, "Add point", mid, f0)
-	# No such restriction for duration
-	# scale extracted phoneme to espeak phoneme's duration
-	scale = target_duration / duration
-	print(f"scaling point @ {mid} by {scale}")
-	# Args: time, scale
-	# FIXME: Do we need more points? Right now, Praat should lerp between points, which is probably good enough.
-	pm.praat.call(duration_tier, "Add point", mid, scale)
+			#pm.praat.call(duration_tier, "Add point", start + 0.001, 1)
+			#pm.praat.call(duration_tier, "Add point", end - 0.001, 1)
+			#pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
+			#pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
 
-	# Another viable approach: 2 points, at start & end; in which case, a few ms away, to make the points unique between consecutive phonemes.
-	# NOTE: This matches how the Praat manual explains that sort of stuff...
-	# The best approach miight depend on the voice, or the "shape" of the scaling, basically?
-	#pm.praat.call(duration_tier, "Add point", start + 0.001, scale)
-	#pm.praat.call(duration_tier, "Add point", end - 0.001, scale)
+	# Apply the PSOLA manipulations
+	# NOTE: Since we apply everything at once, I assume this doesn't skew our timestamp positions given the duration changes?
+	pm.praat.call([manip, pitch_tier], "Replace pitch tier")
+	pm.praat.call([manip, duration_tier], "Replace duration tier")
+	return pm.praat.call(manip, "Get resynthesis (overlap-add)")
 
-	#pm.praat.call(duration_tier, "Add point", start + 0.001, 1)
-	#pm.praat.call(duration_tier, "Add point", end - 0.001, 1)
-	#pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
-	#pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
+def synthesize():
+	# FIXME!
+	sentence = SENTENCES[0]
+	output_sound, sentence_data = synthesize_sentence(sentence, CONCAT_SOUND)
 
-# Apply the PSOLA manipulations
-# NOTE: Since we apply everything at once, I assume this doesn't skew our timestamp positions given the duration changes?
-pm.praat.call([manip, pitch_tier], "Replace pitch tier")
-pm.praat.call([manip, duration_tier], "Replace duration tier")
-modified_wav = pm.praat.call(manip, "Get resynthesis (overlap-add)")
+	# Snapshot the concatenation results before PSOLA
+	output_sound.save(CONCAT_WAV, "WAV")
+	print(output_sound.n_samples, output_sound.get_total_duration(), format_duration(output_sound.duration))
 
-# Format: also available via module constants, e.g., pm.SoundFileFormat.WAV
-modified_wav.save(OUTPUT_FINAL_WAV, "WAV")
-print(modified_wav.n_samples, modified_wav.get_total_duration(), format_duration(modified_wav.duration))
+	# Apply PSOLA manipulations
+	modified_wav = manipulate_sound(output_sound, sentence_data)
+
+	# And, finally, save the final result!
+	modified_wav.save(OUTPUT_FINAL_WAV, "WAV")
+	print(modified_wav.n_samples, modified_wav.get_total_duration(), format_duration(modified_wav.duration))
