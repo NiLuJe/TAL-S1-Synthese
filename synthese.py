@@ -88,7 +88,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, diphones: Tier):
 			mid_left = left.mid
 			mid_right = right.mid
 
-			# NOTE: we can't choose only risong or descending crossings...
+			# NOTE: We can't choose only rising or descending crossings...
 			"""
 			mid_left = sound.get_nearest_zero_crossing(mid_left, 1)
 			mid_right = sound.get_nearest_zero_crossing(mid_right, 1)
@@ -187,13 +187,6 @@ def synthesize_word(word: str, output_sound):
 	# Zip it!
 	espeak_data = []
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
-		# FIXME: Skip pauses when they're not at the edges (can't add silence this way... ;'()
-		"""
-		if 0 < i < len(espeak_phonemes)-1:
-			if phoneme.startswith("_"):
-				continue
-		"""
-
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
 		if phoneme == "ɡ":
 			# We prefer the ASCII `g` (U+0067)
@@ -224,7 +217,7 @@ def synthesize_word(word: str, output_sound):
 		print(f"Iterating on diphone: {phone1}{phone2}")
 
 		# NOTE: Handle word gaps manually, as we only annotate "long" diphones on *sentence* edges..
-		if 0 < right_i < len(espeak_data)-1:
+		if 0 < left_i < len(espeak_data)-2:
 			if phone1.startswith("_") or phone2.startswith("_"):
 				print("Inserting a word gap silence")
 				# Create a silence
@@ -304,8 +297,15 @@ pitch_tier = pm.praat.call(manip, "Extract pitch tier")
 pm.praat.call(pitch_tier, "Remove points between", 0, concatenated_sound.duration)
 duration_tier = pm.praat.call(manip, "Extract duration tier")
 
-for phoneme_data in sentence_data:
-	print(f"phoneme: {phoneme_data["phoneme"]}")
+for i, phoneme_data in enumerate(sentence_data):
+	phoneme = phoneme_data["phoneme"]
+
+	# NOTE: Leave inter-word gaps we handled as silences alone
+	if 0 < i < len(sentence_data)-1:
+		if phoneme.startswith("_"):
+			continue
+
+	print(f"phoneme: {phoneme}")
 	# In the concatenated stream
 	start = phoneme_data["concat_start"]
 	end = phoneme_data["concat_end"]
