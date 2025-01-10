@@ -162,18 +162,29 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 	f0 = float("nan")
 	offset = 0.0
 
-	while math.isnan(f0):
-		pos = float()
-		match which:
-			case "start":
+	match which:
+		case "start":
+			while math.isnan(f0):
 				pos = start + offset
 				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
 				#print("start_f0", f0, offset)
-			case "end":
+
+				# Look 1ms away next...
+				offset += 0.001
+				# Don't go OOB of the phoneme
+				if pos >= end:
+					break
+		case "end":
+			while math.isnan(f0):
 				pos = end - offset
 				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
 				#print("end_f0", f0, offset)
-			case "mid":
+
+				offset += 0.001
+				if pos <= start:
+					break
+		case "mid":
+			while math.isnan(f0):
 				# Look ahead...
 				pos = mid + offset
 				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
@@ -187,11 +198,10 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 				pos = mid - offset
 				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
 				#print("(behind) mid_f0", f0, offset)
-		# Look 1ms away next...
-		offset += 0.001
-		# Don't go OOB of the phoneme
-		if pos <= start or pos >= end:
-			break
+
+				offset += 0.001
+				if pos <= start or pos >= end:
+					break
 
 	return f0
 
