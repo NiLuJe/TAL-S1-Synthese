@@ -52,7 +52,7 @@ SETTINGS = {
 	"pitch_range_multiplier": 1.0, # 0-2.0
 	"wpm": 150, # 80-450, Praat's default is 175
 	# Behavior tweaks
-	"skip_word_gaps": True, # NOTE: Don't expose this, False is subtly wrong. Add word_gap silences on espeak word gaps if False, otherwise, skip them
+	"skip_word_gaps": True, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
 	"pitch_points": "mean", # How many pitch points to copy from eSpeak (mean: a single point, set to the mean; trio: three points: start, mid, end)
 }
@@ -271,14 +271,14 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 
 	# Zip it all together!
 	espeak_data = []
+	# Track wordgap silences
+	silence = 0.0
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
-		# NOTE: When we don't want to insert silences at word-gaps, just skip them entirely.
-		#       This makes the following loops slightly saner to follow,
-		#       and the metadata tracking for PSOLA manipulations *much* easier...
-		#       (c.f., before f89c1264f980c615a3c41ca0c998cb4f5d9cf8a1).
+		# NOTE: Keep track of word-gap silences
 		if SETTINGS["skip_word_gaps"]:
 			if 0 < i < len(espeak_phonemes)-1:
 				if phoneme.startswith("_"):
+					silence = SETTINGS["word_gap"] * 4 if phoneme.endswith(":") else SETTINGS["word_gap"]
 					continue
 
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
@@ -315,8 +315,11 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 			"start_f0": start_f0,
 			"mid_f0": mid_f0,
 			"end_f0": end_f0,
+			"silence_after": silence,
 		}
 		espeak_data.append(d)
+		# We've consumed the word-gap silences
+		silence = 0.0
 	return espeak_data
 
 def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list[dict[str, Any]]]:
@@ -329,40 +332,16 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 	# Let eSpeak do its thing first
 	espeak_data = espeak_sentence(sentence, ESPEAK_WAV, ESPEAK_GRID)
 
-	real_left, real_right = None, None
 	# NOTE: Make sure we iterate on a list, and not a string, to handle diacritics properly...
 	for i, pair in enumerate(itertools.pairwise(espeak_data)):
-		# Trickery needed to deal with word-gaps...
-		left  = real_left or pair[0]
-		right = real_right or pair[1]
+		left  = pair[0]
+		right = pair[1]
 
 		left_i = left["idx"]
 		phone1 = left["phoneme"]
 		right_i = right["idx"]
 		phone2 = right["phoneme"]
 		print(f"Iterating on diphone: {phone1}{phone2}")
-
-		# NOTE: Handle word gaps manually, as we only annotate "long" diphones on *sentence* edges..
-		# NOTE: This effectively inserts a silence in a middle of diphone chains between words, which is... less than ideal.
-		#       i.e., jE~_f leads to jE~ -> _ -> E~f, which means the E~ inherits a silence smack in its middle,
-		#       which increases its duration in the metadata for PSOLA manipulations later on...
-		# TL;DR: Code left in for archeological purposes; leaving skip_word_gaps set to True is *highly* recommended.
-		if 0 < left_i < len(espeak_data)-2:
-			# NOTE: We drop them entirely from espeak_data w/ skip_word_gaps, so no need to re-check that setting here
-			if phone1.startswith("_") or phone2.startswith("_"):
-				# Create a chunk of silence
-				duration = SETTINGS["word_gap"] * 4 if phone1.endswith(":") or phone2.endswith(":") else SETTINGS["word_gap"]
-				print(f"Inserting a {duration} seconds word gap silence")
-				silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
-				# Insert it w/o metadata, we won't need it for PSOLA later
-				output_sound = output_sound.concatenate([output_sound, silence])
-				# Remember the proper phoneme to use for the next iteration (i.e., skip over the silences while keeping track of the previous phone)...
-				if phone2.startswith("_"):
-					real_left = espeak_data[left_i]
-				else:
-					real_right = espeak_data[right_i]
-				# And skip right to the next iteration
-				continue
 
 		extraction, diphone_data = extract_diphone(phone1, phone2, DIPHONES_SOUND, DIPHONES_TIER, DIPHONES_PP)
 
@@ -402,9 +381,43 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
 			print(f"[bold red]!! Failed to extract diphone[/bold red] [bold green]{phone1}{phone2}[/bold green]")
-		# That was a real diphone extraction, clear the word gap tracking...
-		real_left, real_right = None, None
 	return (output_sound, espeak_data)
+
+def insert_word_gaps(concatenated_sound: Sound, sentence_data: list[dict[str, Any]]) -> tuple[Sound, list[dict[str, Any]]]:
+	"""
+	Iterate over `concatenated_sound` phoneme by phoneme, inserting word-gap silences (if any),
+	via the metadata available in `sentence_data` (as produced by `espeak_sentence` & `synthesize_sentence`).
+	The metadata will be updated to account for the added duration.
+	Returns a tuple with said sound object, and a list of metadata dictionaries for each phoneme,
+	like `espeak_sentence`.
+	"""
+
+	# Iterate phoneme by phoneme over their metadata
+	for i, phoneme_data in enumerate(sentence_data):
+			phoneme = phoneme_data["phoneme"]
+
+			# Skip sthe actual ilence markers, we've already accounted for them in `espeak_sentence`
+			if 0 < i < len(sentence_data)-1:
+				if phoneme.startswith("_"):
+					continue
+
+			# Check if we need to insert a word-gap silence after this phoneme
+			duration = phoneme_data["silence_after"]
+			if duration > 0:
+				print(f"Inserting a {duration} seconds word-gap silence after phoneme {phoneme}")
+				# Create a chunk of silence
+				silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
+				# Insert it after the current phoneme's end by cutting things up and stitching them back up...
+				threshold = phoneme_data["concat_end"]
+				before = concatenated_sound.extract_part(0, threshold, pm.WindowShape.RECTANGULAR, 1, False)
+				after  = concatenated_sound.extract_part(threshold, concatenated_sound.duration, pm.WindowShape.RECTANGULAR, 1, False)
+				concatenated_sound = before.concatenate([before, silence, after])
+
+				# Shift all of the *following* phonemes' timestamps accordingly...
+				for e in sentence_data[i+1:]:
+					e["concat_start"] += duration
+					e["concat_end"]   += duration
+	return (concatenated_sound, sentence_data)
 
 def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, Any]]) -> Sound:
 	"""
@@ -500,6 +513,10 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 
 def synthesize(sentence: str):
 	output_sound, sentence_data = synthesize_sentence(sentence, CONCAT_SOUND)
+
+	# If requested, insert word-gap silences
+	if not SETTINGS["skip_word_gaps"]:
+		output_sound, sentence_data = insert_word_gaps(output_sound, sentence_data)
 
 	# Snapshot the concatenation results before PSOLA
 	output_sound.save(CONCAT_WAV, "WAV")
