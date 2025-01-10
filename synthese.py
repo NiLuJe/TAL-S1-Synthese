@@ -233,28 +233,50 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
 
 		# But also store a few pitch points to experiment with...
+		# NOTE: This is trickier than the mean, because there may be undefined pitch points (or none at all, for voiceless phonemes)...
 		mid = (float(start) + float(end)) / 2
 		offset = 0.0
 		start_f0 = float("nan")
 		while math.isnan(start_f0):
 			pos = start + offset
 			start_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-			offset += 0.001
 			print("start_f0", start_f0, offset)
+
+			offset += 0.001
+			# Don't go OOB of the phoneme
 			if pos >= end:
 				break
 
-		# NOTE: Would *also* require jittering left and right if NaN...
-		mid_f0 = pm.praat.call(pitch_synth, "Get value at time", mid, "Hertz", "linear")
-		print(f"mid_f0: {mid_f0}")
+		# May also require jittering left and right...
+		offset = 0.0
+		mid_f0 = float("nan")
+		while math.isnan(mid_f0):
+			# Look ahead...
+			pos = mid + offset
+			mid_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
+			print("(ahead) mid_f0", mid_f0, offset)
+
+			# Did we get it?
+			if not math.isnan(mid_f0):
+				break
+
+			# Nope, look behind...
+			pos = mid - offset
+			mid_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
+			print("(behind) mid_f0", mid_f0, offset)
+
+			offset += 0.001
+			if pos <= start or pos >= end:
+				break
 
 		offset = 0.0
 		end_f0 = float("nan")
 		while math.isnan(end_f0):
 			pos = end - offset
 			end_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-			offset += 0.001
 			print("end_f0", end_f0, offset)
+
+			offset += 0.001
 			if pos <= start:
 				break
 
