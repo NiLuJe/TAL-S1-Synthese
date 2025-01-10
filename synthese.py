@@ -20,8 +20,9 @@ from textgrids import Tier
 from parselmouth import Sound, Data
 
 # TODO: Go through all the labels and build a diphone bank in one go, then just query it.
-#       Make it a list, so we keep duplicates, and just choose one at random during synth.
-#       Also remember the original position, and default to choosing the closest pos to the prev match (i.e., in order, make it the default).
+#       Store entries in a dictionary, with a *list* of (Sound, metadata) tuples, so we can keep duplicates, and just choose one at random during synth.
+#       Also remember its original position in the recording, and default to choosing the closest pos to the prev match
+#       (i.e., match diphones in order, make it the default).
 # TODO: CLI, interactive mode w/ sentence selection
 
 # NOTE: Paths are relative to this file.
