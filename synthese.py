@@ -52,7 +52,7 @@ SETTINGS = {
 	"pitch_range_multiplier": 1.0, # 0-2.0
 	"wpm": 150, # 80-450, Praat's default is 175
 	# Behavior tweaks
-	"skip_word_gaps": True, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
+	"skip_word_gaps": False, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
 	"pitch_points": "mean", # How many pitch points to copy from eSpeak (mean: a single point, set to the mean; trio: three points: start, mid, end)
 }
@@ -314,7 +314,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 			"start_f0": start_f0,
 			"mid_f0": mid_f0,
 			"end_f0": end_f0,
-			"silence_after": silence,
+			"silence_before": silence,
 		}
 		espeak_data.append(d)
 		# We've consumed the word-gap silences
@@ -400,20 +400,20 @@ def insert_word_gaps(concatenated_sound: Sound, sentence_data: list[dict[str, An
 				if phoneme.startswith("_"):
 					continue
 
-			# Check if we need to insert a word-gap silence after this phoneme
-			duration = phoneme_data["silence_after"]
+			# Check if we need to insert a word-gap silence before this phoneme
+			duration = phoneme_data["silence_before"]
 			if duration > 0:
-				print(f"Inserting a {duration} seconds word-gap silence after phoneme {phoneme}")
+				print(f"Inserting a {duration} seconds word-gap silence before phoneme {phoneme}")
 				# Create a chunk of silence
 				silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
-				# Insert it after the current phoneme's end by cutting things up and stitching them back up...
-				threshold = phoneme_data["concat_end"]
+				# Insert it before the current phoneme's start by cutting things up and stitching them back up...
+				threshold = phoneme_data["concat_start"]
 				before = concatenated_sound.extract_part(0, threshold, pm.WindowShape.RECTANGULAR, 1, False)
 				after  = concatenated_sound.extract_part(threshold, concatenated_sound.duration, pm.WindowShape.RECTANGULAR, 1, False)
 				concatenated_sound = before.concatenate([before, silence, after])
 
-				# Shift all of the *following* phonemes' timestamps accordingly...
-				for e in sentence_data[i+1:]:
+				# Shift this and all of the *following* phonemes' timestamps accordingly...
+				for e in sentence_data[i:]:
 					e["concat_start"] += duration
 					e["concat_end"]   += duration
 	return (concatenated_sound, sentence_data)
