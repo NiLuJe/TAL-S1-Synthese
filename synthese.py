@@ -155,6 +155,53 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier
 			return (sound.extract_part(mid_left, mid_right, pm.WindowShape.RECTANGULAR, 1, False), diphone_data)
 	return (None, None)
 
+def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> float:
+	"""Scour a Pitch object `pitch_object` for a pitch point between positions `start` and `end`, looking for the start/mid/end points."""
+
+	mid = (start + end) / 2
+	f0 = float("nan")
+	offset = 0.0
+
+	while math.isnan(f0):
+		match which:
+			case "start":
+				pos = start + offset
+				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
+				#print("start_f0", f0, offset)
+
+				offset += 0.001
+				# Don't go OOB of the phoneme
+				if pos >= end:
+					break
+			case "end":
+				pos = end - offset
+				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
+				#print("end_f0", f0, offset)
+
+				offset += 0.001
+				if pos <= start:
+					break
+			case "mid":
+				# Look ahead...
+				pos = mid + offset
+				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
+				#print("(ahead) mid_f0", f0, offset)
+
+				# Did we get it?
+				if not math.isnan(f0):
+					break
+
+				# Nope, look behind...
+				pos = mid - offset
+				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
+				#print("(behind) mid_f0", f0, offset)
+
+				offset += 0.001
+				if pos <= start or pos >= end:
+					break
+
+	return f0
+
 def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str) -> list[dict[str, Any]]:
 	"""
 	Synthesize sentence `sentence` via Praat's eSpeak implementation.
@@ -238,47 +285,9 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 		# Don't compute them if we won't use them
 		if SETTINGS["pitch_points"] == "trio":
 			# NOTE: This is trickier than the mean, because there may be undefined pitch points (or none at all, for voiceless phonemes)...
-			offset = 0.0
-			while math.isnan(start_f0):
-				pos = start + offset
-				start_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-				#print("start_f0", start_f0, offset)
-
-				offset += 0.001
-				# Don't go OOB of the phoneme
-				if pos >= end:
-					break
-
-			# May also require jittering left and right...
-			offset = 0.0
-			while math.isnan(mid_f0):
-				# Look ahead...
-				pos = mid + offset
-				mid_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-				#print("(ahead) mid_f0", mid_f0, offset)
-
-				# Did we get it?
-				if not math.isnan(mid_f0):
-					break
-
-				# Nope, look behind...
-				pos = mid - offset
-				mid_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-				#print("(behind) mid_f0", mid_f0, offset)
-
-				offset += 0.001
-				if pos <= start or pos >= end:
-					break
-
-			offset = 0.0
-			while math.isnan(end_f0):
-				pos = end - offset
-				end_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-				#print("end_f0", end_f0, offset)
-
-				offset += 0.001
-				if pos <= start:
-					break
+			start_f0 = find_pitch_point(pitch_synth, start, end, "start")
+			mid_f0   = find_pitch_point(pitch_synth, start, end, "mid")
+			end_f0   = find_pitch_point(pitch_synth, start, end, "end")
 
 		# We'll store everything in a list of dicts...
 		d = {
