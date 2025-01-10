@@ -292,10 +292,10 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
 		if "ɡ" in phoneme:
 			# We prefer the ASCII `g` (U+0067)
-			phoneme.replace("ɡ", "g")
+			phoneme = phoneme.replace("ɡ", "g")
 		# In the same vein, strip the unrounded diacritic mark
 		if "-" in phoneme:
-			phoneme.replace("-", "")
+			phoneme = phoneme.replace("-", "")
 		# NOTE: Other Kirshenbaum quirks may also happen, c.f., https://en.wikipedia.org/wiki/Kirshenbaum
 
 		# We default to the mean pitch...
@@ -549,5 +549,5 @@ def synthesize(sentence: str):
 
 # Main entry-point
 if __name__ == "__main__":
-	# Throw the first sentence at it for a quick sanity check
-	synthesize(SENTENCES[0])
+	# Throw a single sentence at it for a quick sanity check
+	synthesize(SENTENCES[1])
