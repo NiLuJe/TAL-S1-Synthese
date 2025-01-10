@@ -422,7 +422,7 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 						# Args: time, freq
 						pm.praat.call(pitch_tier, "Add point", mid, mean_f0)
 					else:
-						print("[yellow]No pitch data[yellow]")
+						print("[yellow]No pitch data[/yellow]")
 				case "trio":
 					start_f0 = phoneme_data["start_f0"]
 					mid_f0   = phoneme_data["mid_f0"]
@@ -434,7 +434,7 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 						pm.praat.call(pitch_tier, "Add point", mid, mid_f0)
 						pm.praat.call(pitch_tier, "Add point", end - 0.001, end_f0)
 					else:
-						print("[yellow]No pitch data[yellow]")
+						print("[yellow]No pitch data[/yellow]")
 				case _:
 					print(f"[red]!! Invalid `pitch_points` setting:[/red] [green]{SETTINGS["pitch_points"]}[/green]")
 
