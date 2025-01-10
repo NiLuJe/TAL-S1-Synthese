@@ -158,7 +158,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier
 	return (None, None)
 
 def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> float:
-	"""Scour a Pitch object `pitch_object` for a pitch point between positions `start` and `end`, looking for the start/mid/end points."""
+	"""Scour a Pitch object `pitch_object` in 1ms steps for a pitch point between positions `start` and `end`, looking for the start/mid/end points."""
 
 	mid = (start + end) / 2
 	f0 = float("nan")
