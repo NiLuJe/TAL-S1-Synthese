@@ -345,7 +345,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 		# NOTE: Handle word gaps manually, as we only annotate "long" diphones on *sentence* edges..
 		# NOTE: This effectively inserts a silence in a middle of diphone chains between words, which is... less than ideal.
 		#       i.e., jE~_f leads to jE~ -> _ -> E~f, which means the E~ inherits a silence smack in its middle,
-		#       which increases its duration in the metadats for PSOLA manipulations later on...
+		#       which increases its duration in the metadata for PSOLA manipulations later on...
 		# TL;DR: Code left in for archeological purposes; leaving skip_word_gaps set to True is *highly* recommended.
 		if 0 < left_i < len(espeak_data)-2:
 			# NOTE: We drop them entirely from espeak_data w/ skip_word_gaps, so no need to re-check that setting here
