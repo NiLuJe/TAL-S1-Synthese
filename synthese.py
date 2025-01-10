@@ -53,7 +53,7 @@ SETTINGS = {
 	"pitch_range_multiplier": 1.0, # 0-2.0
 	"wpm": 150, # 80-450, Praat's default is 175
 	# Behavior tweaks
-	"skip_word_gaps": False, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
+	"skip_word_gaps": True, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
 	"pitch_points": "mean", # How many pitch points to copy from eSpeak (mean: a single point, set to the mean; trio: three points: start, mid, end)
 }
@@ -168,7 +168,7 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 		case "start":
 			while math.isnan(f0):
 				pos = start + offset
-				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
+				f0 = pitch_obj.get_value_at_time(pos)
 				#print("start_f0", f0, offset)
 
 				# Look 1ms away next...
@@ -179,7 +179,7 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 		case "end":
 			while math.isnan(f0):
 				pos = end - offset
-				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
+				f0 = pitch_obj.get_value_at_time(pos)
 				#print("end_f0", f0, offset)
 
 				offset += 0.001
@@ -189,7 +189,7 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 			while math.isnan(f0):
 				# Look ahead...
 				pos = mid + offset
-				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
+				f0 = pitch_obj.get_value_at_time(pos)
 				#print("(ahead) mid_f0", f0, offset)
 
 				# Did we get it?
@@ -198,7 +198,7 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 
 				# Nope, look behind...
 				pos = mid - offset
-				f0 = pm.praat.call(pitch_obj, "Get value at time", pos, "Hertz", "linear")
+				f0 = pitch_obj.get_value_at_time(pos)
 				#print("(behind) mid_f0", f0, offset)
 
 				offset += 0.001
@@ -248,8 +248,9 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	# We can use raw ac instead, but under its old name, which takes arguments in a slightly different order...
 	# c.f., https://www.fon.hum.uva.nl/praat/manual/Sound__To_Pitch__ac____.html
 	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (raw autocorrelation)", 0, 75, 600, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14)
-	pitch_synth = pm.praat.call(sound_synth, "To Pitch (ac)", 0.0, 75, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14, 600)
-	# NOTE: Parselmouth has a to_pitch_ac method, also...
+	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (ac)", 0.0, 75, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14, 600)
+	# NOTE: Fortunately, Parselmouth does have a to_pitch_ac method...
+	pitch_synth = sound_synth.to_pitch_ac(very_accurate=True)
 
 	# NOTE: This includes word-gaps, and silences on punctuation marks.
 	#       See `insert_word_gaps`
