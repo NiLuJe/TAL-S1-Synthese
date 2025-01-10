@@ -21,6 +21,7 @@ from parselmouth import Sound, Data
 # TODO: Go through all the labels and build a diphone bank in one go, then just query it.
 #       Make it a list, so we keep duplicates, and just choose one at random during synth.
 #       Also remember the original position, and default to choosing the closest pos to the prev match (i.e., in order, make it the default).
+# TODO: CLI, interactive mode w/ sentence selection; end with playing the actual audio.
 
 # NOTE: Paths are relative to this file.
 BASE_DIR = Path(__file__).parent.resolve()
@@ -248,6 +249,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	# c.f., https://www.fon.hum.uva.nl/praat/manual/Sound__To_Pitch__ac____.html
 	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (raw autocorrelation)", 0, 75, 600, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14)
 	pitch_synth = pm.praat.call(sound_synth, "To Pitch (ac)", 0.0, 75, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14, 600)
+	# NOTE: Parselmouth has a to_pitch_ac method, also...
 
 	# NOTE: This includes word-gaps, and silences on punctuation marks.
 	#       See `insert_word_gaps`
