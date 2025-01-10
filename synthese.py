@@ -345,9 +345,9 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 		if 0 < left_i < len(espeak_data)-2:
 			# NOTE: We drop them entirely from espeak_data w/ skip_word_gaps, so no need to re-check that setting here
 			if phone1.startswith("_") or phone2.startswith("_"):
-				print("Inserting a word gap silence")
 				# Create a chunk of silence
 				duration = SETTINGS["word_gap"] * 4 if phone1.endswith(":") or phone2.endswith(":") else SETTINGS["word_gap"]
+				print(f"Inserting a {duration} seconds word gap silence")
 				silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
 				# Insert it w/o metadata, we won't need it for PSOLA later
 				output_sound = output_sound.concatenate([output_sound, silence])
