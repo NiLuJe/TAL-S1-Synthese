@@ -18,7 +18,7 @@ from typing import Any
 from textgrids import Tier
 from parselmouth import Sound, Data
 
-# TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
+# TODO: Go through all the labels and build a diphone bank in one go, then just query it.
 # 		Make it a list, so we keep duplicates, and just choose one at random during synth.
 #       Also remember the original position, and default to choosing the closest pos to the prev match (i.e., in order, make it the default).
 
