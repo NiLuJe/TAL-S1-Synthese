@@ -127,6 +127,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier
 			mid_right = pm.praat.call(pp, "Get time from index", id)
 
 			# Return original phoneme data to allow proper PSOLA processing later on...
+			# NOTE: We store more data than striclty needed, to ease human verification ;).
 			diphone_data = (
 				{
 					"phoneme": phoneme_1,
@@ -288,6 +289,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 		# Don't compute them if we won't use them
 		if SETTINGS["pitch_points"] == "trio":
 			# NOTE: This is trickier than the mean, because there may be undefined pitch points (or none at all, for voiceless phonemes)...
+			#       See the `find_pitch_point` implementation for more details.
 			start_f0 = find_pitch_point(pitch_synth, start, end, "start")
 			mid_f0   = find_pitch_point(pitch_synth, start, end, "mid")
 			end_f0   = find_pitch_point(pitch_synth, start, end, "end")
