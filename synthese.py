@@ -52,7 +52,7 @@ SETTINGS = {
 	"pitch_range_multiplier": 1.0, # 0-2.0
 	"wpm": 150, # 80-450, Praat's default is 175
 	# Behavior tweaks
-	"skip_word_gaps": False, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
+	"skip_word_gaps": True, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
 	"pitch_points": "mean", # How many pitch points to copy from eSpeak (mean: a single point, set to the mean; trio: three points: start, mid, end)
 }
@@ -250,7 +250,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	pitch_synth = pm.praat.call(sound_synth, "To Pitch (ac)", 0.0, 75, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14, 600)
 
 	# NOTE: This includes word-gaps, and silences on punctuation marks.
-	#       See the whole skip_word_gaps codepaths...
+	#       See the whole !skip_word_gaps codepaths...
 	espeak_phonemes = [pm.praat.call(text_synth, "Get label of interval", 4, i + 1) for i in range(n)]
 	print(f"espeak_phonemes: {espeak_phonemes}")
 	# Replace empty phonemes w/ an underscore
@@ -274,6 +274,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
 		# NOTE: When we don't want to insert silences at word-gaps, just skip them entirely.
 		#       This makes the following loops slightly saner to follow,
+		#       and the metadata tracking for PSOLA manipulations *much* easier...
 		#       (c.f., before f89c1264f980c615a3c41ca0c998cb4f5d9cf8a1).
 		if SETTINGS["skip_word_gaps"]:
 			if 0 < i < len(espeak_phonemes)-1:
@@ -342,6 +343,10 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 		print(f"Iterating on diphone: {phone1}{phone2}")
 
 		# NOTE: Handle word gaps manually, as we only annotate "long" diphones on *sentence* edges..
+		# NOTE: This effectively inserts a silence in a middle of diphone chains between words, which is... less than ideal.
+		#       i.e., jE~_f leads to jE~ -> _ -> E~f, which means the E~ inherits a silence smack in its middle,
+		#       which increases its duration in the metadats for PSOLA manipulations later on...
+		# TL;DR: Code left in for archeological purposes; leaving skip_word_gaps set to True is *highly* recommended.
 		if 0 < left_i < len(espeak_data)-2:
 			# NOTE: We drop them entirely from espeak_data w/ skip_word_gaps, so no need to re-check that setting here
 			if phone1.startswith("_") or phone2.startswith("_"):
@@ -373,7 +378,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 
 			#print("starting espeak_data (right):")
 			#pprint(espeak_data[right_i], expand_all=True)
-			# NOTE: We can't use espeak_data[left_i]["concat_end"] because that would fail to account for inserted word-gap silences
+			# NOTE: We can't use espeak_data[left_i]["concat_end"] because that would fail to account for inserted word-gap silences...
 			right_pos = output_sound.duration + diphone_data[0]["extracted_duration"]
 			espeak_data[right_i]["concat_start"]    = espeak_data[right_i].get("concat_start", right_pos)
 			espeak_data[right_i]["concat_duration"] = espeak_data[right_i].get("concat_duration", 0.0) + diphone_data[1]["extracted_duration"]
