@@ -50,7 +50,7 @@ SETTINGS = {
 	"word_gap": 0.01, # in seconds
 	"pitch_multiplier": 1.0, # 0.5-2.0
 	"pitch_range_multiplier": 1.0, # 0-2.0
-	"wpm": 175, # 80-450
+	"wpm": 150, # 80-450, Praat's default is 175
 	# Behavior tweaks
 	"skip_word_gaps": False, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
@@ -240,7 +240,14 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	# Format: also available via module constants, e.g., pm.SoundFileFormat.WAV
 	sound_synth.save(output_sound_path, "WAV")
 
-	pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
+	# I was getting some pretty weird outliers w/ shs when slowing down eSpeak's wpm...
+	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
+	# NOTE: Praat's docs recommend this algo for intonation, but Parselmouh 0.4.5 ships with an older internal Praat copy...
+	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (filtered autocorrelation)", 0, 50, 800, 15, "yes", 0.03, 0.09, 0.5, 0.055, 0.35, 0.14)
+	# We can use raw ac instead, but under its old name, which takes arguments in a slightly different order...
+	# c.f., https://www.fon.hum.uva.nl/praat/manual/Sound__To_Pitch__ac____.html
+	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (raw autocorrelation)", 0, 75, 600, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14)
+	pitch_synth = pm.praat.call(sound_synth, "To Pitch (ac)", 0.0, 75, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14, 600)
 
 	# NOTE: This includes word-gaps, and silences on punctuation marks.
 	#       See the whole skip_word_gaps codepaths...
@@ -280,6 +287,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 
 		# We default to the mean pitch...
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
+		#print(phoneme, mean_f0, start, end)
 
 		# But also store a few pitch points to experiment with, if requested...
 		mid = (float(start) + float(end)) / 2
