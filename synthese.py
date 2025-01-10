@@ -128,7 +128,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier
 			mid_right = pm.praat.call(pp, "Get time from index", id)
 
 			# Return original phoneme data to allow proper PSOLA processing later on...
-			# NOTE: We store more data than strictly needed, to ease human verification ;).
+			# NOTE: We store (way) more data than strictly needed, to ease human verification ;).
 			diphone_data = (
 				{
 					"phoneme": phoneme_1,
@@ -241,7 +241,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	# Format: also available via module constants, e.g., pm.SoundFileFormat.WAV
 	sound_synth.save(output_sound_path, "WAV")
 
-	# I was getting some pretty weird outliers w/ shs when slowing down eSpeak's wpm (on voiceless phonemes, even!)...
+	# I was getting some pretty wild outliers w/ shs when slowing down eSpeak's wpm (on voiceless phonemes, even!)...
 	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
 	# NOTE: Praat's docs recommend this algo for intonation, but Parselmouh 0.4.5 ships with an older internal Praat copy...
 	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (filtered autocorrelation)", 0, 50, 800, 15, "yes", 0.03, 0.09, 0.5, 0.055, 0.35, 0.14)
@@ -363,7 +363,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 
 			#print("starting espeak_data (right):")
 			#pprint(espeak_data[right_i], expand_all=True)
-			# NOTE: We can't use espeak_data[left_i]["concat_end"] because that would fail to account for inserted word-gap silences...
+			# NOTE: Since everything is contiguous, right_pos should match espeak_data[left_i]["concat_end"]
 			right_pos = output_sound.duration + diphone_data[0]["extracted_duration"]
 			espeak_data[right_i]["concat_start"]    = espeak_data[right_i].get("concat_start", right_pos)
 			espeak_data[right_i]["concat_duration"] = espeak_data[right_i].get("concat_duration", 0.0) + diphone_data[1]["extracted_duration"]
