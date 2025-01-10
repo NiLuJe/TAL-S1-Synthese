@@ -18,12 +18,9 @@ from typing import Any
 from textgrids import Tier
 from parselmouth import Sound, Data
 
-# TODO: 1 vs. 3 point per pitch contours, and keep it as an option
 # TODO: Go through all the labels and build a phoneme bank in one go, then just query it.
 # 		Make it a list, so we keep duplicates, and just choose one at random during synth.
 #       Also remember the original position, and default to choosing the closest pos to the prev match (i.e., in order, make it the default).
-# TODO: Make the voice choice an option (filter male voices?)
-# TODO: Make the inter-word gap (if any?) configurable
 
 # NOTE: Paths are relative to this file.
 BASE_DIR = Path(__file__).parent.resolve()
@@ -57,6 +54,7 @@ SETTINGS = {
 	# Behavior tweaks
 	"skip_word_gaps": False, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
+	"pitch_points": "mean", # How many pitch points to copy from eSpeak (mean: a single point, set to the mean; trio: three points: start, mid, end)
 }
 
 # Utility functions
@@ -232,54 +230,55 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 		# We default to the mean pitch...
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
 
-		# But also store a few pitch points to experiment with...
-		# NOTE: This is trickier than the mean, because there may be undefined pitch points (or none at all, for voiceless phonemes)...
+		# But also store a few pitch points to experiment with, if requested...
 		mid = (float(start) + float(end)) / 2
-		offset = 0.0
 		start_f0 = float("nan")
-		while math.isnan(start_f0):
-			pos = start + offset
-			start_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-			print("start_f0", start_f0, offset)
-
-			offset += 0.001
-			# Don't go OOB of the phoneme
-			if pos >= end:
-				break
-
-		# May also require jittering left and right...
-		offset = 0.0
 		mid_f0 = float("nan")
-		while math.isnan(mid_f0):
-			# Look ahead...
-			pos = mid + offset
-			mid_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-			print("(ahead) mid_f0", mid_f0, offset)
-
-			# Did we get it?
-			if not math.isnan(mid_f0):
-				break
-
-			# Nope, look behind...
-			pos = mid - offset
-			mid_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-			print("(behind) mid_f0", mid_f0, offset)
-
-			offset += 0.001
-			if pos <= start or pos >= end:
-				break
-
-		offset = 0.0
 		end_f0 = float("nan")
-		while math.isnan(end_f0):
-			pos = end - offset
-			end_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
-			print("end_f0", end_f0, offset)
+		# Don't compute them if we won't use them
+		if SETTINGS["pitch_points"] == "trio":
+			# NOTE: This is trickier than the mean, because there may be undefined pitch points (or none at all, for voiceless phonemes)...
+			offset = 0.0
+			while math.isnan(start_f0):
+				pos = start + offset
+				start_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
+				#print("start_f0", start_f0, offset)
 
-			offset += 0.001
-			if pos <= start:
-				break
+				offset += 0.001
+				# Don't go OOB of the phoneme
+				if pos >= end:
+					break
 
+			# May also require jittering left and right...
+			offset = 0.0
+			while math.isnan(mid_f0):
+				# Look ahead...
+				pos = mid + offset
+				mid_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
+				#print("(ahead) mid_f0", mid_f0, offset)
+
+				# Did we get it?
+				if not math.isnan(mid_f0):
+					break
+
+				# Nope, look behind...
+				pos = mid - offset
+				mid_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
+				#print("(behind) mid_f0", mid_f0, offset)
+
+				offset += 0.001
+				if pos <= start or pos >= end:
+					break
+
+			offset = 0.0
+			while math.isnan(end_f0):
+				pos = end - offset
+				end_f0 = pm.praat.call(pitch_synth, "Get value at time", pos, "Hertz", "linear")
+				#print("end_f0", end_f0, offset)
+
+				offset += 0.001
+				if pos <= start:
+					break
 
 		# We'll store everything in a list of dicts...
 		d = {
@@ -410,17 +409,32 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 			duration = phoneme_data["concat_duration"]
 			print(f"concat duration: {duration} ({start} -> {end})")
 			# From eSpeak
-			f0 = phoneme_data["f0"]
 			target_duration = phoneme_data["duration"]
 			print(f"target duration: {target_duration} ({phoneme_data["start"]} -> {phoneme_data["end"]})")
-			# We need an f0 ;)
-			if f0 > 0:
-				# Args: time, freq
-				pm.praat.call(pitch_tier, "Add point", mid, f0)
-			# No such restriction for duration
+
+			# We can experiment with a couple variations on how to apply the pitch...
+			match SETTINGS["pitch_points"]:
+				case "mean":
+					# We need an f0 ;)
+					mean_f0 = phoneme_data["f0"]
+					if mean_f0 > 0:
+						# Args: time, freq
+						pm.praat.call(pitch_tier, "Add point", mid, mean_f0)
+				case "trio":
+					start_f0 = phoneme_data["start_f0"]
+					mid_f0   = phoneme_data["mid_f0"]
+					end_f0   = phoneme_data["end_f0"]
+					if start_f0 > 0 and mid_f0 > 0 and end_f0 > 0:
+						# NOTE: We plop these right at the edges, while we may have captured them slightly further away than that during the search...
+						pm.praat.call(pitch_tier, "Add point", start + 0.001, start_f0)
+						pm.praat.call(pitch_tier, "Add point", mid, mid_f0)
+						pm.praat.call(pitch_tier, "Add point", end - 0.001, end_f0)
+				case _:
+					print(f"[red]!! Invalid `pitch_points` setting:[/red] [green]{SETTINGS["pitch_points"]}[/green]")
+
+			# No need to validate target_duration, on the other hand, it's guaranteed to be non-zero.
 			# scale extracted phoneme to eSpeak phoneme's duration
 			scale = target_duration / duration
-
 			# We can experiment with a few variations on how to apply the duration...
 			match SETTINGS["duration_points"]:
 				case "mid":
