@@ -2,7 +2,7 @@ File type = "ooTextFile"
 Object class = "TextGrid"
 
 xmin = 0 
-xmax = 266.674562 
+xmax = 270.128125 
 tiers? <exists> 
 size = 1 
 item []: 
@@ -10,8 +10,8 @@ item []:
         class = "IntervalTier" 
         name = "phone" 
         xmin = 0 
-        xmax = 266.674562 
-        intervals: size = 619 
+        xmax = 270.128125 
+        intervals: size = 632 
         intervals [1]:
             xmin = 0 
             xmax = 10.073319675145893 
@@ -2486,5 +2486,57 @@ item []:
             text = "***" 
         intervals [619]:
             xmin = 266.5748780665166 
-            xmax = 266.674562 
+            xmax = 266.76747591384554 
+            text = "" 
+        intervals [620]:
+            xmin = 266.76747591384554 
+            xmax = 266.9995612629507 
+            text = "***" 
+        intervals [621]:
+            xmin = 266.9995612629507 
+            xmax = 267.2203504224977 
+            text = "f" 
+        intervals [622]:
+            xmin = 267.2203504224977 
+            xmax = 267.3928740448414 
+            text = "O" 
+        intervals [623]:
+            xmin = 267.3928740448414 
+            xmax = 267.60086766224134 
+            text = "" 
+        intervals [624]:
+            xmin = 267.60086766224134 
+            xmax = 267.84527612722826 
+            text = "***" 
+        intervals [625]:
+            xmin = 267.84527612722826 
+            xmax = 268.76740259629 
+            text = "" 
+        intervals [626]:
+            xmin = 268.76740259629 
+            xmax = 268.94300699760413 
+            text = "***" 
+        intervals [627]:
+            xmin = 268.94300699760413 
+            xmax = 269.23663445972545 
+            text = "" 
+        intervals [628]:
+            xmin = 269.23663445972545 
+            xmax = 269.37218873442407 
+            text = "O" 
+        intervals [629]:
+            xmin = 269.37218873442407 
+            xmax = 269.46153132456635 
+            text = "r" 
+        intervals [630]:
+            xmin = 269.46153132456635 
+            xmax = 269.6278933889692 
+            text = "" 
+        intervals [631]:
+            xmin = 269.6278933889692 
+            xmax = 269.8918134541021 
+            text = "***" 
+        intervals [632]:
+            xmin = 269.8918134541021 
+            xmax = 270.128125 
             text = "" 
