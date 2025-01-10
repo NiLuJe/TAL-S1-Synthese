@@ -284,9 +284,13 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 				continue
 
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
-		if phoneme == "ɡ":
+		if "ɡ" in phoneme:
 			# We prefer the ASCII `g` (U+0067)
-			phoneme = "g"
+			phoneme.replace("ɡ", "g")
+		# In the same vein, strip the unrounded diacritic mark
+		if "-" in phoneme:
+			phoneme.replace("-", "")
+		# NOTE: Other Kirshenbaum quirks may also happen, c.f., https://en.wikipedia.org/wiki/Kirshenbaum
 
 		# We default to the mean pitch...
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
