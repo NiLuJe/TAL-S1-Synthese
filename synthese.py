@@ -250,7 +250,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	pitch_synth = pm.praat.call(sound_synth, "To Pitch (ac)", 0.0, 75, 15, "yes", 0.03, 0.45, 0.01, 0.35, 0.14, 600)
 
 	# NOTE: This includes word-gaps, and silences on punctuation marks.
-	#       See the whole !skip_word_gaps codepaths...
+	#       See `insert_word_gaps`
 	espeak_phonemes = [pm.praat.call(text_synth, "Get label of interval", 4, i + 1) for i in range(n)]
 	print(f"espeak_phonemes: {espeak_phonemes}")
 	# Replace empty phonemes w/ an underscore
@@ -275,11 +275,10 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	silence = 0.0
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
 		# NOTE: Keep track of word-gap silences
-		if SETTINGS["skip_word_gaps"]:
-			if 0 < i < len(espeak_phonemes)-1:
-				if phoneme.startswith("_"):
-					silence = SETTINGS["word_gap"] * 4 if phoneme.endswith(":") else SETTINGS["word_gap"]
-					continue
+		if 0 < i < len(espeak_phonemes)-1:
+			if phoneme.startswith("_"):
+				silence = SETTINGS["word_gap"] * 4 if phoneme.endswith(":") else SETTINGS["word_gap"]
+				continue
 
 		# NOTE: Kirshenbaum uses the IPA `ɡ` (U+0261), take care of it...
 		if phoneme == "ɡ":
