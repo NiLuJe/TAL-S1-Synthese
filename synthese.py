@@ -541,6 +541,8 @@ def synthesize(sentence: str):
 	modified_wav.save(OUTPUT_FINAL_WAV, "WAV")
 	print_sound_info(modified_wav)
 
+	# If requested use playsound3 to play the final result.
+	# This should hopefully be cross-platform and dependency-free...
 	if SETTINGS["autoplay"]:
 		print(f"Playing [blue]{OUTPUT_FINAL_WAV}[/blue]...")
 		playsound(OUTPUT_FINAL_WAV, block=True, daemon=False)
