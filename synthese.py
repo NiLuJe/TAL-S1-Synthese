@@ -550,4 +550,4 @@ def synthesize(sentence: str):
 # Main entry-point
 if __name__ == "__main__":
 	# Throw a single sentence at it for a quick sanity check
-	synthesize(SENTENCES[1])
+	synthesize(SENTENCES[2])
