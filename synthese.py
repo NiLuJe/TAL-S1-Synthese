@@ -418,17 +418,23 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 					# We need an f0 ;)
 					mean_f0 = phoneme_data["f0"]
 					if mean_f0 > 0:
+						print(f"Adding a mean pitch point of {mean_f0} Hz @ midpoint {mid}")
 						# Args: time, freq
 						pm.praat.call(pitch_tier, "Add point", mid, mean_f0)
+					else:
+						print("[yellow]No pitch data[yellow]")
 				case "trio":
 					start_f0 = phoneme_data["start_f0"]
 					mid_f0   = phoneme_data["mid_f0"]
 					end_f0   = phoneme_data["end_f0"]
 					if start_f0 > 0 and mid_f0 > 0 and end_f0 > 0:
+						print(f"Adding three pitch points [{start_f0}, {mid_f0}, {end_f0}] Hz @ [{start}, {mid}, {end}]")
 						# NOTE: We plop these right at the edges, while we may have captured them slightly further away than that during the search...
 						pm.praat.call(pitch_tier, "Add point", start + 0.001, start_f0)
 						pm.praat.call(pitch_tier, "Add point", mid, mid_f0)
 						pm.praat.call(pitch_tier, "Add point", end - 0.001, end_f0)
+					else:
+						print("[yellow]No pitch data[yellow]")
 				case _:
 					print(f"[red]!! Invalid `pitch_points` setting:[/red] [green]{SETTINGS["pitch_points"]}[/green]")
 
