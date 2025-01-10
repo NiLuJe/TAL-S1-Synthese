@@ -12,6 +12,7 @@ import math
 import parselmouth as pm
 import textgrids as tg
 from pathlib import Path
+from playsound3 import playsound
 
 # Data types for typing annotations
 from typing import Any
@@ -21,7 +22,7 @@ from parselmouth import Sound, Data
 # TODO: Go through all the labels and build a diphone bank in one go, then just query it.
 #       Make it a list, so we keep duplicates, and just choose one at random during synth.
 #       Also remember the original position, and default to choosing the closest pos to the prev match (i.e., in order, make it the default).
-# TODO: CLI, interactive mode w/ sentence selection; end with playing the actual audio.
+# TODO: CLI, interactive mode w/ sentence selection
 
 # NOTE: Paths are relative to this file.
 BASE_DIR = Path(__file__).parent.resolve()
@@ -56,6 +57,7 @@ SETTINGS = {
 	"skip_word_gaps": True, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
 	"pitch_points": "mean", # How many pitch points to copy from eSpeak (mean: a single point, set to the mean; trio: three points: start, mid, end)
+	"autoplay": False, # Play the result
 }
 
 # Utility functions
@@ -534,6 +536,10 @@ def synthesize(sentence: str):
 	# And, finally, save the final result!
 	modified_wav.save(OUTPUT_FINAL_WAV, "WAV")
 	print_sound_info(modified_wav)
+
+	if SETTINGS["autoplay"]:
+		print(f"Playing [blue]{OUTPUT_FINAL_WAV}[/blue]...")
+		playsound(OUTPUT_FINAL_WAV, block=True, daemon=False)
 
 # Main entry-point
 if __name__ == "__main__":

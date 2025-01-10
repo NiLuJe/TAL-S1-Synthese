@@ -4,3 +4,4 @@ librosa
 colorama
 termcolor
 rich
+playsound3
