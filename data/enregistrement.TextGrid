@@ -623,7 +623,7 @@ item []:
         intervals [153]:
             xmin = 49.01946082506319 
             xmax = 49.09286344059566 
-            text = "O" 
+            text = "o" 
         intervals [154]:
             xmin = 49.09286344059566 
             xmax = 49.22302678571428 
@@ -643,7 +643,7 @@ item []:
         intervals [158]:
             xmin = 50.373426318048665 
             xmax = 50.48653854526262 
-            text = "O" 
+            text = "o" 
         intervals [159]:
             xmin = 50.48653854526262 
             xmax = 50.6056673803071 
