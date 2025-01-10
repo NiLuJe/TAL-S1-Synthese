@@ -8,19 +8,55 @@ import synthese as Synthesize
 
 # Quick'n dirty command via click
 @click.command()
-@click.option("-s", "--sentence",				default=1,			help="Sentence to synthesize")
-@click.option("-v", "--voice",					default="Male6",	help="eSpeak voice to use")
-@click.option("-g", "--word-gap",				default=0.025,		help="eSpeak word gap, in seconds")
-@click.option("-p", "--pitch-multiplier",		default=1.0,		help="eSpeak pitch multiplier")
-@click.option("-r", "--pitch-range-multiplier",	default=1.0,		help="eSpeak pitch range multiplier")
-@click.option("-w", "--wpm",					default=150,		help="eSpeak words per minute")
-@click.option("-G", "--skip-word-gaps",			default=True,		help="Do not honor eSpeak word-gap silences")
-@click.option("-D", "--duration-points",		default="mid",		help="How many duration points to use during PSOLA manipulations")
-@click.option("-P", "--pitch-points",			default="mean",		help="How many pitch points to use during PSOLA manipulations")
-@click.option("-A", "--autoplay",				default=False,		help="Play the final sound clip")
+@click.option("-s", "--sentence",
+				default=1,
+				help="Sentence number to synthesize",
+				type=click.IntRange(1, len(Synthesize.SENTENCES)),
+				show_default=True)
+@click.option("-v", "--voice",
+				default=Synthesize.SETTINGS["voice"],
+				help="eSpeak voice to use",
+				show_default=True)
+@click.option("-g", "--word-gap",
+				default=Synthesize.SETTINGS["word_gap"],
+				help="eSpeak word gap, in seconds",
+				show_default=True)
+@click.option("-p", "--pitch-multiplier",
+				default=Synthesize.SETTINGS["pitch_multiplier"],
+				help="eSpeak pitch multiplier",
+				type=click.FloatRange(0.5, 2.0),
+				show_default=True)
+@click.option("-r", "--pitch-range-multiplier",
+				default=Synthesize.SETTINGS["pitch_range_multiplier"],
+				help="eSpeak pitch range multiplier",
+				type=click.FloatRange(0, 2.0),
+				show_default=True)
+@click.option("-w", "--wpm",
+				default=Synthesize.SETTINGS["wpm"],
+				help="eSpeak words per minute",
+				type=click.IntRange(80, 450),
+				show_default=True)
+@click.option("-G", "--skip-word-gaps",
+				default=Synthesize.SETTINGS["skip_word_gaps"],
+				help="Do not honor eSpeak word-gap silences",
+				show_default=True)
+@click.option("-D", "--duration-points",
+				default=Synthesize.SETTINGS["duration_points"],
+				help="How many duration points to use during PSOLA manipulations",
+				type=click.Choice(["mid", "edges", "bracketed"]),
+				show_default=True)
+@click.option("-P", "--pitch-points",
+				default=Synthesize.SETTINGS["pitch_points"],
+				help="How many pitch points to use during PSOLA manipulations",
+				type=click.Choice(["mean", "trio"]),
+				show_default=True)
+@click.option("-A", "--autoplay",
+				default=Synthesize.SETTINGS["autoplay"],
+				help="Play the final sound clip",
+				show_default=True)
 
 def main(
-	sentence: str,
+	sentence: int,
 	voice: str,
 	word_gap: float,
 	pitch_multiplier: float,
@@ -31,9 +67,9 @@ def main(
 	pitch_points: str,
 	autoplay: bool
 ):
-	"""CLI interface for Synthesize"""
+	"""CLI for Synthesize"""
 
-	Synthesize.synthesize(Synthesize.SENTENCES[0])
+	Synthesize.synthesize(Synthesize.SENTENCES[sentence-1])
 
 if __name__ == '__main__':
 	main()
