@@ -47,7 +47,7 @@ SENTENCES = [
 SETTINGS = {
 	# For eSpeak
 	"voice": "Male6", # m6 seems to match the default for roa/fr in espeak-ng...
-	"word_gap": 0.01, # in seconds
+	"word_gap": 0.025, # in seconds
 	"pitch_multiplier": 1.0, # 0.5-2.0
 	"pitch_range_multiplier": 1.0, # 0-2.0
 	"wpm": 150, # 80-450, Praat's default is 175
@@ -240,7 +240,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 	# Format: also available via module constants, e.g., pm.SoundFileFormat.WAV
 	sound_synth.save(output_sound_path, "WAV")
 
-	# I was getting some pretty weird outliers w/ shs when slowing down eSpeak's wpm...
+	# I was getting some pretty weird outliers w/ shs when slowing down eSpeak's wpm (on voiceless phonemes, even!)...
 	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (shs)", 0.01, 50, 15, 1250, 15, 0.84, 600, 48)
 	# NOTE: Praat's docs recommend this algo for intonation, but Parselmouh 0.4.5 ships with an older internal Praat copy...
 	#pitch_synth = pm.praat.call(sound_synth, "To Pitch (filtered autocorrelation)", 0, 50, 800, 15, "yes", 0.03, 0.09, 0.5, 0.055, 0.35, 0.14)
@@ -347,7 +347,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 			if phone1.startswith("_") or phone2.startswith("_"):
 				print("Inserting a word gap silence")
 				# Create a chunk of silence
-				duration = SETTINGS["word_gap"] * 2 if phone1.endswith(":") or phone2.endswith(":") else SETTINGS["word_gap"]
+				duration = SETTINGS["word_gap"] * 4 if phone1.endswith(":") or phone2.endswith(":") else SETTINGS["word_gap"]
 				silence = pm.praat.call("Create Sound from formula", "silence", 1, 0, duration, 16000, str(0))
 				# Insert it w/o metadata, we won't need it for PSOLA later
 				output_sound = output_sound.concatenate([output_sound, silence])
