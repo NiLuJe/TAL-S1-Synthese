@@ -11,7 +11,7 @@ item []:
         name = "phone" 
         xmin = 0 
         xmax = 270.908437 
-        intervals: size = 633 
+        intervals: size = 631 
         intervals [1]:
             xmin = 0 
             xmax = 10.073319675145893 
@@ -2514,33 +2514,25 @@ item []:
             text = "" 
         intervals [626]:
             xmin = 268.53161756327654 
-            xmax = 268.6536564344706 
+            xmax = 268.79945930979375 
             text = "***" 
         intervals [627]:
-            xmin = 268.6536564344706 
-            xmax = 268.7735947317068 
-            text = "" 
-        intervals [628]:
-            xmin = 268.7735947317068 
-            xmax = 268.80602104659476 
-            text = "***" 
-        intervals [629]:
-            xmin = 268.80602104659476 
+            xmin = 268.79945930979375 
             xmax = 268.89001692250935 
             text = "O" 
-        intervals [630]:
+        intervals [628]:
             xmin = 268.89001692250935 
             xmax = 268.96020497445255 
             text = "r" 
-        intervals [631]:
+        intervals [629]:
             xmin = 268.96020497445255 
             xmax = 269.10902882368254 
             text = "" 
-        intervals [632]:
+        intervals [630]:
             xmin = 269.10902882368254 
             xmax = 269.39450076084546 
             text = "***" 
-        intervals [633]:
+        intervals [631]:
             xmin = 269.39450076084546 
             xmax = 270.908437 
             text = "" 
