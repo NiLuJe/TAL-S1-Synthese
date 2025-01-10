@@ -19,7 +19,7 @@ from textgrids import Tier
 from parselmouth import Sound, Data
 
 # TODO: Go through all the labels and build a diphone bank in one go, then just query it.
-# 		Make it a list, so we keep duplicates, and just choose one at random during synth.
+#       Make it a list, so we keep duplicates, and just choose one at random during synth.
 #       Also remember the original position, and default to choosing the closest pos to the prev match (i.e., in order, make it the default).
 
 # NOTE: Paths are relative to this file.
@@ -52,7 +52,7 @@ SETTINGS = {
 	"pitch_range_multiplier": 1.0, # 0-2.0
 	"wpm": 150, # 80-450, Praat's default is 175
 	# Behavior tweaks
-	"skip_word_gaps": True, # Add word_gap silences on espeak word gaps if False, otherwise, skip them
+	"skip_word_gaps": True, # NOTE: Don't expose this, False is subtly wrong. Add word_gap silences on espeak word gaps if False, otherwise, skip them
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
 	"pitch_points": "mean", # How many pitch points to copy from eSpeak (mean: a single point, set to the mean; trio: three points: start, mid, end)
 }
@@ -127,7 +127,7 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier
 			mid_right = pm.praat.call(pp, "Get time from index", id)
 
 			# Return original phoneme data to allow proper PSOLA processing later on...
-			# NOTE: We store more data than striclty needed, to ease human verification ;).
+			# NOTE: We store more data than strictly needed, to ease human verification ;).
 			diphone_data = (
 				{
 					"phoneme": phoneme_1,
@@ -402,7 +402,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
 			print(f"[bold red]!! Failed to extract diphone[/bold red] [bold green]{phone1}{phone2}[/bold green]")
-		# That was a real dihone extraction, clear the word gap tracking...
+		# That was a real diphone extraction, clear the word gap tracking...
 		real_left, real_right = None, None
 	return (output_sound, espeak_data)
 
