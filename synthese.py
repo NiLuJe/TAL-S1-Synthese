@@ -373,7 +373,8 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 
 			#print("starting espeak_data (right):")
 			#pprint(espeak_data[right_i], expand_all=True)
-			right_pos = espeak_data[left_i]["concat_end"]
+			# NOTE: We can't use espeak_data[left_i]["concat_end"] because that would fail to account for inserted word-gap silences
+			right_pos = output_sound.duration + diphone_data[0]["extracted_duration"]
 			espeak_data[right_i]["concat_start"]    = espeak_data[right_i].get("concat_start", right_pos)
 			espeak_data[right_i]["concat_duration"] = espeak_data[right_i].get("concat_duration", 0.0) + diphone_data[1]["extracted_duration"]
 			espeak_data[right_i]["concat_end"]      = espeak_data[right_i]["concat_start"] + espeak_data[right_i]["concat_duration"]
