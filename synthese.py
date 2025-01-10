@@ -14,6 +14,7 @@ import itertools
 import math
 import parselmouth as pm
 import textgrids as tg
+import sys
 from pathlib import Path
 from playsound3 import playsound
 
@@ -392,7 +393,7 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:
-			print(f"[bold red]!! Failed to extract diphone[/bold red] [bold green]{phone1}{phone2}[/bold green]")
+			print(f"[bold red]!! Failed to extract diphone[/bold red] [bold green]{phone1}{phone2}[/bold green]", file=sys.stderr)
 	return (output_sound, espeak_data)
 
 def insert_word_gaps(concatenated_sound: Sound, sentence_data: list[dict[str, Any]]) -> tuple[Sound, list[dict[str, Any]]]:
@@ -489,7 +490,7 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 					else:
 						print("[yellow]No pitch data[/yellow]")
 				case _:
-					print(f"[red]!! Invalid `pitch_points` setting:[/red] [green]{SETTINGS["pitch_points"]}[/green]")
+					print(f"[red]!! Invalid `pitch_points` setting:[/red] [green]{SETTINGS["pitch_points"]}[/green]", file=sys.stderr)
 
 			# No need to validate target_duration, on the other hand, it's guaranteed to be non-zero.
 			# scale extracted phoneme to eSpeak phoneme's duration
@@ -513,7 +514,7 @@ def manipulate_sound(concatenated_sound: Sound, sentence_data: list[dict[str, An
 					pm.praat.call(duration_tier, "Add point", start + 0.002, scale)
 					pm.praat.call(duration_tier, "Add point", end - 0.002, scale)
 				case _:
-					print(f"[red]!! Invalid `duration_points` setting:[/red] [green]{SETTINGS["duration_points"]}[/green]")
+					print(f"[red]!! Invalid `duration_points` setting:[/red] [green]{SETTINGS["duration_points"]}[/green]", file=sys.stderr)
 
 	# Apply the PSOLA manipulations
 	# NOTE: Since we apply everything at once, I assume this doesn't skew our timestamp positions given the duration changes?
