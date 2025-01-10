@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+#
+# https://github.com/NiLuJe/TAL-S1-Synthese
+#
 
 # Whee, colors!
 from colorama import just_fix_windows_console
