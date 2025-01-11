@@ -12,7 +12,8 @@ def set_param(ctx, param, value):
 
 	if value is None or ctx.resilient_parsing:
 		return
-	name = param.human_readable_name.replace("-", "_")
+
+	name = param.human_readable_name
 	#print(f"Setting {name} to {value}")
 	Synthesize.SETTINGS[name] = value
 
