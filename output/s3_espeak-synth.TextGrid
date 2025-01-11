@@ -1,0 +1,160 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 2.0117006802721087 
+tiers? <exists> 
+size = 4 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "sentence" 
+        xmin = 0 
+        xmax = 2.0117006802721087 
+        intervals: size = 1 
+        intervals [1]:
+            xmin = 0 
+            xmax = 2.0117006802721087 
+            text = "Barrez-vous, cons de mimes !" 
+    item [2]:
+        class = "IntervalTier" 
+        name = "clause" 
+        xmin = 0 
+        xmax = 2.0117006802721087 
+        intervals: size = 3 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.78 
+            text = "Barrez-vous," 
+        intervals [2]:
+            xmin = 0.78 
+            xmax = 2.011 
+            text = " cons de mimes !" 
+        intervals [3]:
+            xmin = 2.011 
+            xmax = 2.0117006802721087 
+            text = "" 
+    item [3]:
+        class = "IntervalTier" 
+        name = "word" 
+        xmin = 0 
+        xmax = 2.0117006802721087 
+        intervals: size = 6 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.013000000000000001 
+            text = "" 
+        intervals [2]:
+            xmin = 0.013000000000000001 
+            xmax = 0.78 
+            text = "Barrez-vous," 
+        intervals [3]:
+            xmin = 0.78 
+            xmax = 1.028 
+            text = "cons" 
+        intervals [4]:
+            xmin = 1.028 
+            xmax = 1.175 
+            text = "de" 
+        intervals [5]:
+            xmin = 1.175 
+            xmax = 2.011 
+            text = "mimes !" 
+        intervals [6]:
+            xmin = 2.011 
+            xmax = 2.0117006802721087 
+            text = "" 
+    item [4]:
+        class = "IntervalTier" 
+        name = "phoneme" 
+        xmin = 0 
+        xmax = 2.0117006802721087 
+        intervals: size = 22 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.013000000000000001 
+            text = "" 
+        intervals [2]:
+            xmin = 0.013000000000000001 
+            xmax = 0.031 
+            text = "b" 
+        intervals [3]:
+            xmin = 0.031 
+            xmax = 0.14400000000000002 
+            text = "a" 
+        intervals [4]:
+            xmin = 0.14400000000000002 
+            xmax = 0.159 
+            text = "r" 
+        intervals [5]:
+            xmin = 0.159 
+            xmax = 0.275 
+            text = "e" 
+        intervals [6]:
+            xmin = 0.275 
+            xmax = 0.365 
+            text = "v" 
+        intervals [7]:
+            xmin = 0.365 
+            xmax = 0.559 
+            text = "u" 
+        intervals [8]:
+            xmin = 0.559 
+            xmax = 0.586 
+            text = "_" 
+        intervals [9]:
+            xmin = 0.586 
+            xmax = 0.78 
+            text = "_:" 
+        intervals [10]:
+            xmin = 0.78 
+            xmax = 0.835 
+            text = "_" 
+        intervals [11]:
+            xmin = 0.835 
+            xmax = 0.881 
+            text = "k" 
+        intervals [12]:
+            xmin = 0.881 
+            xmax = 1.0010000000000001 
+            text = "O~" 
+        intervals [13]:
+            xmin = 1.0010000000000001 
+            xmax = 1.039 
+            text = "_" 
+        intervals [14]:
+            xmin = 1.039 
+            xmax = 1.06 
+            text = "d" 
+        intervals [15]:
+            xmin = 1.06 
+            xmax = 1.1480000000000001 
+            text = "@-" 
+        intervals [16]:
+            xmin = 1.1480000000000001 
+            xmax = 1.175 
+            text = "_" 
+        intervals [17]:
+            xmin = 1.175 
+            xmax = 1.309 
+            text = "m" 
+        intervals [18]:
+            xmin = 1.309 
+            xmax = 1.419 
+            text = "i" 
+        intervals [19]:
+            xmin = 1.419 
+            xmax = 1.547 
+            text = "m" 
+        intervals [20]:
+            xmin = 1.547 
+            xmax = 1.574 
+            text = "_" 
+        intervals [21]:
+            xmin = 1.574 
+            xmax = 2.011 
+            text = "_:" 
+        intervals [22]:
+            xmin = 2.011 
+            xmax = 2.0117006802721087 
+            text = "_" 
