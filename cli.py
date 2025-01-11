@@ -10,9 +10,10 @@ import synthese as Synthesize
 def set_param(ctx, param, value):
 	"""Set a Synthesize settings"""
 
-	if not value or ctx.resilient_parsing:
+	if value is None or ctx.resilient_parsing:
 		return
 	name = param.human_readable_name.replace("-", "_")
+	#print(f"Setting {name} to {value}")
 	Synthesize.SETTINGS[name] = value
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -89,6 +90,7 @@ def main(
 ):
 	"""CLI for Synthesize"""
 
+	#print(Synthesize.SETTINGS)
 	Synthesize.synthesize(Synthesize.SENTENCES[sentence-1])
 
 # Main entry-point
