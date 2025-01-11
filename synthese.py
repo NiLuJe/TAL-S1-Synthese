@@ -310,7 +310,7 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 
 	# Zip it all together!
 	espeak_data = []
-	# Track wordgap silences
+	# Track word-gap silences
 	silence = 0.0
 	for i, (phoneme, start, end) in enumerate(zip(espeak_phonemes, espeak_phonemes_start_ts, espeak_phonemes_end_ts)):
 		# NOTE: Keep track of word-gap silences
