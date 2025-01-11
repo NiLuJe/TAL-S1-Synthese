@@ -81,6 +81,25 @@ def print_sound_info(sound: Sound):
 	print(sound.info(), end="")
 	print(f"Duration: {format_duration(sound.duration)}")
 
+def list_espeak_voices() -> list[str]:
+	"""List available eSpeak voices"""
+
+	# Alas, we apparently can't do that via parselmouth...
+	"""
+	props = pm.praat.call("Tabulate SpeechSynthesizer voice properties")
+	names = pm.praat.call(props, "Get all texts in column", "voice name")
+	genders = pm.praat.call(props, "Get all texts in column", "gender")
+	"""
+
+	# So, hard-code it...
+	genders = [ "Unknown","Unknown","Female","Female","Male","Female","Female","Female","Male","Male","Female","Female","Unknown","Unknown","Unknown","Male","Unknown","Male","Male","Male","Unknown","Unknown","Unknown","Unknown","Female","Female","Female","Female","Female","Female","Unknown","Unknown","Female","Unknown","Unknown","Unknown","Male","Male","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Male","Female","Male","Male","Male","Male","Male","Male","Male","Male","Unknown","Male","Unknown","Unknown","Unknown","Male","Male","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Unknown","Male","Unknown","Female","Female","Female","Male","Male","Unknown","Male","Male","Male","Unknown" ]
+	voices = [ "Adam","Alex","Alicia","Andrea","Andy","Anika","AnikaRobot","Annie","Antonio","AnxiousAndy","Auntie","Belinda","Benjamin","Boris","Caleb","Croak","David","Demonic","Denis","Diogo","Ed","Edward","Edward2","Fast_test","Female1","Female2","Female3","Female4","Female5","Female_whisper","Gene","Gene2","Grandma","Grandpa","Gustave","Half-LifeAnnouncementSystem","Henrique","Hugo","Ian","Iven","Iven2","Iven3","Iven4","Jacky","John","Kaukovalta","Klatt","Klatt2","Klatt3","Klatt4","Klatt5","Klatt6","Lee","Linda","Male1","Male2","Male3","Male4","Male5","Male6","Male7","Male8","Marcelo","Marco","Mario","Max","Michael","Michel","Miguel","Mike","Mike2","Mr_Serious","Nguyen","Norbert","Pablo","Paul","Pedro","Quincy","Reed","RicishayMax","RicishayMax2","RicishayMax3","Rob","Robert","Robosoft","Robosoft2","Robosoft3","Robosoft4","Robosoft5","Robosoft6","Robosoft7","Robosoft8","Sandro","Shelby","Steph","Steph2","Steph3","Storm","Travis","Tweaky","UniversalRobot","Victor","Whisper","Zac" ]
+
+	# Format it it a single list
+	result = []
+	for v, g in zip(voices, genders):
+		result.append(f"{v} [{g[0]}]")
+	return result
 
 # Global objects
 DIPHONES_SOUND = pm.Sound(SOUND_FILE)

@@ -16,6 +16,7 @@ import synthese as Synthesize
 @click.option("-v", "--voice",
 				default=Synthesize.SETTINGS["voice"],
 				help="eSpeak voice to use",
+				type=click.Choice(Synthesize.list_espeak_voices()),
 				show_default=True)
 @click.option("-g", "--word-gap",
 				default=Synthesize.SETTINGS["word_gap"],
