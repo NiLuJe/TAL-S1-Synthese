@@ -8,3 +8,10 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 pip install -U -r requirements.txt
 ```
+
+## CLI
+
+```
+./cli.py --help
+```
+
