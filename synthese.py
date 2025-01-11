@@ -63,6 +63,9 @@ SETTINGS = {
 	"duration_points": "mid", # How many duration points to use during PSOLA (mid: a single point at the midpoint of the phone; edges: two points at the edges of the phoneme, bracketed: edges, bracketed by neutral points)
 	"pitch_points": "mean", # How many pitch points to copy from eSpeak (mean: a single point, set to the mean; trio: three points: start, mid, end)
 	"autoplay": False, # Play the result
+	# Verbosity
+	"verbose": False, # Dump phoneme metadata to the console
+	"debug": False, # Dump *even more* metadata to the console
 }
 
 # Utility functions
@@ -145,8 +148,8 @@ def extract_diphone(phoneme_1: str, phoneme_2: str, sound: Sound, diphones: Tier
 		phoneme = left.text
 		next = right.text
 
-		# For debugging purposes...
-		#print(f"{phoneme} vs. {phoneme_1} // {next} vs. {phoneme_2}")
+		if SETTINGS["debug"]:
+			print(f"{phoneme} vs. {phoneme_1} // {next} vs. {phoneme_2}")
 		if phoneme == phoneme_1 and next == phoneme_2:
 			mid_left = left.mid
 			mid_right = right.mid
@@ -205,7 +208,8 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 			while math.isnan(f0):
 				pos = start + offset
 				f0 = pitch_obj.get_value_at_time(pos)
-				#print("start_f0", f0, offset)
+				if SETTINGS["debug"]:
+					print(f"start_f0: {f0} @ offset {offset}")
 
 				# Look 1ms away next...
 				offset += 0.001
@@ -216,7 +220,8 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 			while math.isnan(f0):
 				pos = end - offset
 				f0 = pitch_obj.get_value_at_time(pos)
-				#print("end_f0", f0, offset)
+				if SETTINGS["debug"]:
+					print(f"end_f0: {f0} @ offset {offset}")
 
 				offset += 0.001
 				if pos <= start:
@@ -226,7 +231,8 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 				# Look ahead...
 				pos = mid + offset
 				f0 = pitch_obj.get_value_at_time(pos)
-				#print("(ahead) mid_f0", f0, offset)
+				if SETTINGS["debug"]:
+					print(f"(ahead) mid_f0: {f0} @ offset {offset}")
 
 				# Did we get it?
 				if not math.isnan(f0):
@@ -235,7 +241,8 @@ def find_pitch_point(pitch_obj: Data, start: float, end: float, which: str) -> f
 				# Nope, look behind...
 				pos = mid - offset
 				f0 = pitch_obj.get_value_at_time(pos)
-				#print("(behind) mid_f0", f0, offset)
+				if SETTINGS["debug"]:
+					print(f"(behind) mid_f0: {f0} @ offset {offset}")
 
 				offset += 0.001
 				if pos <= start or pos >= end:
@@ -330,7 +337,8 @@ def espeak_sentence(sentence: str, output_sound_path: str, output_grid_path: str
 
 		# We default to the mean pitch...
 		mean_f0 = pm.praat.call(pitch_synth, "Get mean", start, end, "Hertz")
-		#print(phoneme, mean_f0, start, end)
+		if SETTINGS["debug"]:
+			print(f"{phoneme} mean_0: {mean_f0} ({start} -> {end}")
 
 		# But also store a few pitch points to experiment with, if requested...
 		mid = (float(start) + float(end)) / 2
@@ -390,15 +398,17 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 		# Concat
 		if extraction != None and diphone_data != None:
 			# Compute phoneme position in the concatenated stream, keeping in mind that two different diphones contribute to one phoneme...
-			#print("starting espeak_data (left):")
-			#pprint(espeak_data[left_i], expand_all=True)
+			if SETTINGS["debug"]:
+				print("starting espeak_data (left):")
+				pprint(espeak_data[left_i], expand_all=True)
 			left_pos = output_sound.duration
 			espeak_data[left_i]["concat_start"]    = espeak_data[left_i].get("concat_start", left_pos)
 			espeak_data[left_i]["concat_duration"] = espeak_data[left_i].get("concat_duration", 0.0) + diphone_data[0]["extracted_duration"]
 			espeak_data[left_i]["concat_end"]      = espeak_data[left_i]["concat_start"] + espeak_data[left_i]["concat_duration"]
 
-			#print("starting espeak_data (right):")
-			#pprint(espeak_data[right_i], expand_all=True)
+			if SETTINGS["debug"]:
+				print("starting espeak_data (right):")
+				pprint(espeak_data[right_i], expand_all=True)
 			# NOTE: Since everything is contiguous, right_pos should match espeak_data[left_i]["concat_end"]
 			right_pos = output_sound.duration + diphone_data[0]["extracted_duration"]
 			espeak_data[right_i]["concat_start"]    = espeak_data[right_i].get("concat_start", right_pos)
@@ -411,14 +421,15 @@ def synthesize_sentence(sentence: str, output_sound: Sound) -> tuple[Sound, list
 			#	- In espeak data:
 			#		- unprefixed ts are ts in the espeak synth
 			#		- concat ts are the output ts in the concatenated stream
-			print("diphone_data (left):")
-			pprint(diphone_data[0], expand_all=True)
-			print("espeak_data (left):")
-			pprint(espeak_data[left_i], expand_all=True)
-			print("diphone_data (right):")
-			pprint(diphone_data[1], expand_all=True)
-			print("espeak_data (right):")
-			pprint(espeak_data[right_i], expand_all=True)
+			if SETTINGS["verbose"]:
+				print("diphone_data (left):")
+				pprint(diphone_data[0], expand_all=True)
+				print("espeak_data (left):")
+				pprint(espeak_data[left_i], expand_all=True)
+				print("diphone_data (right):")
+				pprint(diphone_data[1], expand_all=True)
+				print("espeak_data (right):")
+				pprint(espeak_data[right_i], expand_all=True)
 
 			output_sound = output_sound.concatenate([output_sound, extraction])
 		else:

@@ -75,6 +75,16 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 				help="Play the final sound clip",
 				callback=set_param,
 				show_default=True)
+@click.option("-v", "--verbose",
+				default=Synthesize.SETTINGS["verbose"],
+				help="Print phoneme metadata during processing",
+				callback=set_param,
+				show_default=True)
+@click.option("-d", "--debug",
+				default=Synthesize.SETTINGS["debug"],
+				help="Print even more phoneme metadata during processing",
+				callback=set_param,
+				show_default=True)
 
 def main(
 	sentence: int,
@@ -86,7 +96,9 @@ def main(
 	skip_word_gaps: bool,
 	duration_points: str,
 	pitch_points: str,
-	autoplay: bool
+	autoplay: bool,
+	verbose: bool,
+	debug: bool
 ):
 	"""CLI for Synthesize"""
 
