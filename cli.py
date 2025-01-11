@@ -7,7 +7,9 @@ import click
 import synthese as Synthesize
 
 # Quick'n dirty command via click
-@click.command(epilog=Synthesize.print_available_sentences())
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+@click.command(context_settings=CONTEXT_SETTINGS, epilog=Synthesize.print_available_sentences())
 @click.option("-s", "--sentence",
 				default=1,
 				help="Which sentence to synthesize",
