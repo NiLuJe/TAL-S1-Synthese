@@ -7,10 +7,10 @@ import click
 import synthese as Synthesize
 
 # Quick'n dirty command via click
-@click.command()
+@click.command(epilog=Synthesize.print_available_sentences())
 @click.option("-s", "--sentence",
 				default=1,
-				help="Sentence number to synthesize",
+				help="Which sentence to synthesize",
 				type=click.IntRange(1, len(Synthesize.SENTENCES)),
 				show_default=True)
 @click.option("-v", "--voice",
@@ -72,5 +72,6 @@ def main(
 
 	Synthesize.synthesize(Synthesize.SENTENCES[sentence-1])
 
-if __name__ == '__main__':
-	main()
+# Main entry-point
+if __name__ == "__main__":
+	main(max_content_width=120)

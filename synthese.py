@@ -82,7 +82,7 @@ def print_sound_info(sound: Sound):
 	print(f"Duration: {format_duration(sound.duration)}")
 
 def list_espeak_voices() -> list[str]:
-	"""List available eSpeak voices"""
+	"""List available eSpeak voices (for click)"""
 
 	# Alas, we apparently can't do that via parselmouth...
 	"""
@@ -100,6 +100,14 @@ def list_espeak_voices() -> list[str]:
 	for v, g in zip(voices, genders):
 		result.append(f"{v} [{g[0]}]")
 	return result
+
+def print_available_sentences() -> str:
+	"""List the available sentences (for click)"""
+
+	rope = [ "List of available sentences:" ]
+	for i, s in enumerate(SENTENCES, start=1):
+		rope.append(f"{i}: {s}")
+	return "\n\n".join(rope)
 
 # Global objects
 DIPHONES_SOUND = pm.Sound(SOUND_FILE)
@@ -570,4 +578,4 @@ def synthesize(sentence: str):
 # Main entry-point
 if __name__ == "__main__":
 	# Throw a single sentence at it for a quick sanity check
-	synthesize(SENTENCES[3])
+	synthesize(SENTENCES[0])
