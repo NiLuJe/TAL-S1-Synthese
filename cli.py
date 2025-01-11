@@ -7,6 +7,14 @@ import click
 import synthese as Synthesize
 
 # Quick'n dirty command via click
+def set_param(ctx, param, value):
+	"""Set a Synthesize settings"""
+
+	if not value or ctx.resilient_parsing:
+		return
+	name = param.human_readable_name.replace("-", "_")
+	Synthesize.SETTINGS[name] = value
+
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 @click.command(context_settings=CONTEXT_SETTINGS, epilog=Synthesize.print_available_sentences())
@@ -19,43 +27,52 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 				default=Synthesize.SETTINGS["voice"],
 				help="eSpeak voice to use",
 				type=click.Choice(Synthesize.list_espeak_voices()),
+				callback=set_param,
 				show_default=True)
 @click.option("-g", "--word-gap",
 				default=Synthesize.SETTINGS["word_gap"],
 				help="eSpeak word gap, in seconds",
+				callback=set_param,
 				show_default=True)
 @click.option("-p", "--pitch-multiplier",
 				default=Synthesize.SETTINGS["pitch_multiplier"],
 				help="eSpeak pitch multiplier",
 				type=click.FloatRange(0.5, 2.0),
+				callback=set_param,
 				show_default=True)
 @click.option("-r", "--pitch-range-multiplier",
 				default=Synthesize.SETTINGS["pitch_range_multiplier"],
 				help="eSpeak pitch range multiplier",
 				type=click.FloatRange(0, 2.0),
+				callback=set_param,
 				show_default=True)
 @click.option("-w", "--wpm",
 				default=Synthesize.SETTINGS["wpm"],
 				help="eSpeak words per minute",
 				type=click.IntRange(80, 450),
+				callback=set_param,
 				show_default=True)
 @click.option("-G", "--skip-word-gaps",
 				default=Synthesize.SETTINGS["skip_word_gaps"],
 				help="Do not honor eSpeak word-gap silences",
+				callback=set_param,
 				show_default=True)
 @click.option("-D", "--duration-points",
 				default=Synthesize.SETTINGS["duration_points"],
 				help="How many duration points to use during PSOLA manipulations",
 				type=click.Choice(["mid", "edges", "bracketed"]),
+				callback=set_param,
 				show_default=True)
 @click.option("-P", "--pitch-points",
 				default=Synthesize.SETTINGS["pitch_points"],
 				help="How many pitch points to use during PSOLA manipulations",
 				type=click.Choice(["mean", "trio"]),
+				callback=set_param,
 				show_default=True)
 @click.option("-A", "--autoplay",
 				default=Synthesize.SETTINGS["autoplay"],
 				help="Play the final sound clip",
+				callback=set_param,
 				show_default=True)
 
 def main(
