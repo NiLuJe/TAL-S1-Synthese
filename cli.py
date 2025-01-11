@@ -75,12 +75,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 				help="Play the final sound clip",
 				callback=set_param,
 				show_default=True)
-@click.option("-v", "--verbose",
+@click.option("--verbose/--no-verbose",
 				default=Synthesize.SETTINGS["verbose"],
 				help="Print phoneme metadata during processing",
 				callback=set_param,
 				show_default=True)
-@click.option("-d", "--debug",
+@click.option("--debug/--no-debug",
 				default=Synthesize.SETTINGS["debug"],
 				help="Print even more phoneme metadata during processing",
 				callback=set_param,
