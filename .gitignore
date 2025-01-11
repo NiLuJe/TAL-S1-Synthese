@@ -170,4 +170,11 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# macOS crap
 .DS_Store
+
+# Srcipt results
+output/espeak-synth.TextGrid
+output/espeak-synth.wav
+output/raw_concat.wav
+output/result.wav
